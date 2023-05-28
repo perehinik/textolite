@@ -3,14 +3,21 @@ import { ToolBox } from './Editor/ToolBox';
 import { Editor } from './Editor/Editor';
 
 function App() {
+  let editor = null;
   useEffect(() => {
-    const editor = new Editor("editor-container");
+    editor = new Editor("editor-container");
   }, []);
   
+  function settingsChanged() {
+    if (editor.settingsChanged) {editor.settingsChanged()}
+  }
+
   return (    
     <>
-      <ToolBox />
+      <ToolBox settingsChanged={settingsChanged}/>
       <div id={"editor-container"}></div>
+      <br/>
+      <p>JUST SOME TEXT</p>
     </>
   );
 }
