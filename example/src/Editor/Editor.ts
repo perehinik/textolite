@@ -1,4 +1,5 @@
 // Add tab handling
+import { optimyzeNode } from './OptimyzeDOM';
 
 type SelectionAdj = {
     startNode: Node,
@@ -129,7 +130,7 @@ export class Editor {
         if (selAdj.startOffset != 0 || (selAdj.endOffset != selAdj.endNode.textContent?.length && selAdj.endOffset != 0)) {
             selAdj.startNode = this.splitStart(selAdj.startNode, selAdj.startOffset);
             
-            // If whole selection range is in same node.
+            // If whole selection rage is in same node.
             if (selIsOneNode) {
                 selAdj.endNode = this.splitEnd(selAdj.startNode, selAdj.endOffset - selAdj.startOffset)
                 selAdj.startNode = selAdj.endNode;
@@ -148,6 +149,12 @@ export class Editor {
         selRange.setEnd(selAdj.endNode, selAdj.endOffset);
         sel?.removeAllRanges();
         sel?.addRange(selRange);
+
+        let rootP = document.getElementById("txt-root");
+        const nodeReplacement = rootP ? optimyzeNode(rootP) : null;
+        if (rootP && nodeReplacement) {
+            rootP.parentNode?.replaceChild(nodeReplacement, rootP)
+        }
 
         this.setBold = !this.setBold;
     }
@@ -177,7 +184,7 @@ export class Editor {
         }
         // Case when target node is the text node and it's the only node in parent node.
         // In this case it should be safe to change parent style.
-        else if (nd.parentNode?.childNodes.length == 1 && (nd.parentNode as HTMLElement)?.style) {
+        else if (nd.parentNode?.childNodes.length === 1 && (nd.parentNode as HTMLElement)?.style) {
             this.updateNodeStyle(nd.parentNode);
         // Case when target node is the text node but it's NOT the only node in parent node.
         // So text node should be replaces with span in order to set style of this part of text.
@@ -200,8 +207,7 @@ export class Editor {
     }
 
     splitStart(nd: Node, offset: number): Node {
-        if (!nd.textContent || offset == 0) {return nd;}
-
+        if (!nd.textContent || offset === 0) {return nd;}
         const textContent = nd.textContent;
         //1. clone anchor node
         let ndClone = document.createElement("span");
@@ -223,7 +229,7 @@ export class Editor {
     }
 
     splitEnd(nd: Node, offset: number): Node {
-        if (!nd.textContent || offset == nd.textContent.length) {return nd;}
+        if (!nd.textContent || offset === nd.textContent.length) {return nd;}
         const textContent = nd.textContent;
         //1. clone anchor node
         let ndClone = document.createElement("span");
@@ -242,82 +248,83 @@ export class Editor {
 
     setStyleFromAnchor(nd: Node, commonNode: Node): Node | undefined {
         const rootNode = document.getElementById(this.containerId);
-        let pNode = nd;
-        if (!pNode) {return nd;}
-        let prevPNode: Node = pNode;
+        let currentNode = nd;
+        if (!currentNode) {return nd;}
+        let prevNode: Node = currentNode;
 
-        pNode = this.updateNodeStyle(pNode)
+        currentNode = this.updateNodeStyle(currentNode)
 
         do {
-            if (pNode.nextSibling) {
-                if (pNode?.parentNode?.isSameNode(commonNode)) {return pNode;}
-                pNode = pNode.nextSibling as Node;
-                pNode = this.updateNodeStyle(pNode);
-                this.resetChildrenStyle(pNode);
+            if (currentNode.nextSibling) {
+                if (currentNode?.parentNode?.isSameNode(commonNode)) {return currentNode;}
+                currentNode = currentNode.nextSibling as Node;
+                currentNode = this.updateNodeStyle(currentNode);
+                this.resetChildrenStyle(currentNode);
             }
             else {
-                prevPNode = pNode;
-                pNode = pNode.parentNode as Node;
+                prevNode = currentNode;
+                currentNode = currentNode.parentNode as Node;
             }
-        } while (pNode && !pNode.isSameNode(commonNode) && !pNode.isSameNode(rootNode))
+        } while (currentNode && !currentNode.isSameNode(commonNode) && !currentNode.isSameNode(rootNode))
 
-        return prevPNode;
+        return prevNode;
     }
 
     setStyleFromFocus(nd: Node, commonNode: Node) {
         const rootNode = document.getElementById(this.containerId);
-        let pNode = nd
-        if (!pNode) {return nd;}
-        let prevPNode: Node = pNode;
-        
-        pNode = this.updateNodeStyle(pNode)
+        let currentNode = nd
+        if (!currentNode) {return nd;}
+        let prevNode: Node = currentNode;
+
+        currentNode = this.updateNodeStyle(currentNode)
 
         do {
-            if (pNode.previousSibling) {
-                if (pNode?.parentNode?.isSameNode(commonNode)) {return pNode;}
-                pNode = pNode.previousSibling as Node;
-                pNode = this.updateNodeStyle(pNode)
-                this.resetChildrenStyle(pNode);
+            if (currentNode.previousSibling) {
+                if (currentNode?.parentNode?.isSameNode(commonNode)) {return currentNode;}
+                currentNode = currentNode.previousSibling as Node;
+                currentNode = this.updateNodeStyle(currentNode)
+                this.resetChildrenStyle(currentNode);
             }
             else {
-                prevPNode = pNode;
-                pNode = pNode.parentNode as Node;
+                prevNode = currentNode;
+                currentNode = currentNode.parentNode as Node;
             }
-        } while (pNode && !pNode.isSameNode(commonNode) && !pNode.isSameNode(rootNode))
+        } while (currentNode && !currentNode.isSameNode(commonNode) && !currentNode.isSameNode(rootNode))
 
-        return prevPNode;
+        return prevNode;
     }
 
-    getIndex(node: Node | null, startOffset: number, rootNode: Node) : number | undefined{
-        if (!node?.parentElement ) {return;};
-        let pNode = node;
+    getIndex(nd: Node | null, startOffset: number, rootNode: Node) : number | undefined{
+        if (!nd?.parentElement ) {return;};
+        let currentNode = nd;
         let index = 0;
-        let prevPNode : Node;
-
+        let prevNode : Node;
         let content = [];
 
         while (true) {
-            prevPNode = pNode
-            pNode = pNode.parentNode as Node;
-            let nodeList = pNode.childNodes;
+            prevNode = currentNode
+            currentNode = currentNode.parentNode as Node;
+            let nodeList = currentNode.childNodes;
 
             for (let i = 0; i < nodeList.length; i++) {
-                const chNode = nodeList[i];
+                const childNode = nodeList[i];
 
-                if (chNode?.textContent && chNode.childNodes.length === 0) {content.push(chNode?.textContent);}
-                if (chNode === node) {
+                if (childNode?.textContent && childNode.childNodes.length === 0) {
+                    content.push(childNode?.textContent);
+                }
+                if (childNode === nd) {
                     index += startOffset;
                     break;
                 }
-                else if (chNode === prevPNode) {
+                else if (childNode === prevNode) {
                     break;
                 }
-                if (chNode?.textContent) {
-                    index += chNode?.textContent.length;
+                if (childNode?.textContent) {
+                    index += childNode?.textContent.length;
                 }
             }
             
-            if (pNode.isSameNode(rootNode.parentNode)) {
+            if (currentNode.isSameNode(rootNode.parentNode)) {
                 return index;
             }
         }
@@ -333,9 +340,9 @@ export class Editor {
         }
         
         for (let i=0; i<commonNode.childNodes.length; i++){
-            let node = commonNode.childNodes[i];
-            if (node.isSameNode(anchorHierarchy[commonNodeDepth + 1])) {return false;}
-            if (node.isSameNode(focusHierarchy[commonNodeDepth + 1])) {return true;}
+            const nd = commonNode.childNodes[i];
+            if (nd.isSameNode(anchorHierarchy[commonNodeDepth + 1])) {return false;}
+            if (nd.isSameNode(focusHierarchy[commonNodeDepth + 1])) {return true;}
         }
         return false;
     }
@@ -351,11 +358,11 @@ export class Editor {
         return anchorHierarchy[maxDepth-1]
     }
 
-    getNodeHierarchy(node: Node, rootNode: Node): Node[] {
-        let nodeHierarchy: Node[] = [node] 
-        while(node.parentNode && !node.isSameNode(rootNode)) {
-            node = node.parentNode;
-            nodeHierarchy.push(node);
+    getNodeHierarchy(nd: Node, rootNode: Node): Node[] {
+        let nodeHierarchy: Node[] = [nd] 
+        while(nd.parentNode && !nd.isSameNode(rootNode)) {
+            nd = nd.parentNode;
+            nodeHierarchy.push(nd);
         }
         return nodeHierarchy;
     }
