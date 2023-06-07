@@ -16,55 +16,91 @@ exports.optimyzeNode = void 0;
 // returns replacement node for provided node or nothing.
 function optimyzeNode(nd, parentStyle) {
     // if it's a leaf
+    if (nd.nodeType === Node.TEXT_NODE) {
+        return nd;
+    }
     if (nd.childNodes.length === 0) {
         return;
     }
     let optimizationRezult = nd.cloneNode();
     let segmentText = "";
+    let segmentType = "TEXT";
+    let segmentStyle = {};
     const ndStyle = getStyle(nd);
     for (let childId = 0; childId < nd.childNodes.length; childId++) {
         const childNd = nd.childNodes[childId]; // as HTMLElement;
-        // No need to modify anything for now
-        if (childNd.nodeType === Node.TEXT_NODE) {
-            segmentText += childNd.textContent;
+        if (!childNd.textContent) {
             continue;
         }
         // This can return text node(concatenated) if style of childNd and all it's children
         // is the same as childNd.parentNode
-        // Otherwise it should return nothing or or modified copy of childNd.
-        const childNodeReplace = optimyzeNode(childNd, concatStyles(parentStyle, ndStyle));
-        // If replacement node is TEXT then style is the same.
-        if (childNodeReplace?.nodeType === Node.TEXT_NODE) {
-            segmentText += childNd.textContent;
+        // Otherwise it should return nothing or modified copy of childNd.
+        const chNdReplace = optimyzeNode(childNd, concatStyles(parentStyle, ndStyle));
+        const chNdReplaceStyle = getStyle(chNdReplace);
+        const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
+        //console.log(nodeType, childNd.textContent, chNdReplaceStyle, segmentType, segmentStyle)
+        // This should be removed in order to implement other node types.
+        if (nodeType !== "TEXT" && nodeType !== "SPAN" && nodeType !== "P") {
             continue;
         }
-        // If return node is SPAN
-        // then we need to create the copy of nd, modify it and return.
-        // so DOM will be updated only at the root nd node.
-        if (childNodeReplace?.nodeName === "SPAN") {
-            if (segmentText !== "") {
-                optimizationRezult.appendChild(document.createTextNode(segmentText));
-                segmentText = "";
-            }
-            optimizationRezult.appendChild(childNodeReplace);
+        // Node contains more than 1 child so can't be optimized
+        if (chNdReplace?.childNodes?.length && chNdReplace.childNodes.length > 1) {
+            addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
+            optimizationRezult.appendChild(chNdReplace);
+            segmentText = "";
+            segmentType = "TEXT";
+            segmentStyle = {};
+        }
+        // Node has same style as previous sibling so can be merged with it.
+        else if (nodeType === segmentType && compareNodeStyles(segmentStyle, chNdReplaceStyle)) {
+            segmentText += childNd.textContent;
+            continue;
+            // Node is different from previous sibling so new segment should be started.
+        }
+        else {
+            addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
+            segmentText = childNd.textContent;
+            segmentType = nodeType ? nodeType : "";
+            segmentStyle = chNdReplaceStyle;
         }
     }
     // No nested SPANs, just text
     if (!optimizationRezult.childNodes.length) {
-        if (nd.parentNode && compareNodeStyles(parentStyle, ndStyle) || segmentText === "") {
+        if (nd.parentNode && compareChildStyle(parentStyle, ndStyle) || segmentText === "") {
             return document.createTextNode(segmentText);
         }
         else {
             optimizationRezult.textContent = segmentText;
+            for (let styleName in segmentStyle) {
+                optimizationRezult.style.setProperty(styleName, segmentStyle[styleName]);
+            }
         }
         // There are nested SPANs and some text at the end.
     }
-    else if (segmentText !== "") {
-        optimizationRezult.appendChild(document.createTextNode(segmentText));
+    else {
+        addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
     }
     return optimizationRezult;
 }
 exports.optimyzeNode = optimyzeNode;
+function addChild(pNd, chNdType, textContent, style) {
+    if (!textContent) {
+        return;
+    }
+    chNdType = chNdType ? chNdType : "TEXT";
+    style = style ? style : {};
+    if (chNdType === "TEXT") {
+        pNd.appendChild(document.createTextNode(textContent));
+    }
+    else {
+        const ndNew = document.createElement(chNdType);
+        ndNew.textContent = textContent;
+        for (let styleName in style) {
+            ndNew.style.setProperty(styleName, style[styleName]);
+        }
+        pNd.appendChild(ndNew);
+    }
+}
 function getStyle(nd) {
     const ndStyle = {};
     if (nd?.style?.length) {
@@ -84,12 +120,23 @@ function concatStyles(parentStyle, childStyle) {
     }
     return chNdStyle;
 }
-function compareNodeStyles(parentStyle, childStyle) {
+function compareChildStyle(parentStyle, childStyle) {
     if (!parentStyle && childStyle) {
         return false;
     }
     for (let cssName in childStyle) {
         if (parentStyle && parentStyle[cssName] !== childStyle[cssName]) {
+            return false;
+        }
+    }
+    return true;
+}
+function compareNodeStyles(Style1, Style2) {
+    if (Object.keys(Style1).length !== Object.keys(Style2).length) {
+        return false;
+    }
+    for (let cssName in Style1) {
+        if (Style1[cssName] !== Style2[cssName]) {
             return false;
         }
     }
