@@ -60,6 +60,7 @@ class Editor {
     settingsChanged() {
         let sel = window.getSelection();
         let rootNode = document.getElementById(this.containerId);
+        let rootP = document.getElementById("txt-root");
         if (!sel || !sel.anchorNode || !sel.focusNode || !rootNode) {
             return;
         }
@@ -83,6 +84,10 @@ class Editor {
             endOffset: reverseSelection ? sel.anchorOffset : sel.focusOffset,
             commonNode: commonNode
         };
+        const startIndex = this.getIndex(selAdj.startNode, selAdj.startOffset, rootP);
+        const endIndex = this.getIndex(selAdj.endNode, selAdj.endOffset, rootP);
+        console.log("Anchor:", startIndex);
+        console.log("Focus:", endIndex);
         // Fix situation when selection is out of root node.
         let startEndNodeUpdated = false;
         if (!this.isChildOrGrandChild(selAdj.startNode, rootNode)) {
@@ -126,16 +131,26 @@ class Editor {
         }
         this.setStyle(selAdj);
         // Create new range and apply it to selection
+        /*
         const selRange = document.createRange();
         selRange.setStart(selAdj.startNode, selAdj.startOffset);
         selRange.setEnd(selAdj.endNode, selAdj.endOffset);
         sel?.removeAllRanges();
         sel?.addRange(selRange);
-        let rootP = document.getElementById("txt-root");
+        */
         const nodeReplacement = rootP ? (0, OptimyzeDOM_1.optimyzeNode)(rootP) : null;
         if (rootP && nodeReplacement) {
             rootP.parentNode?.replaceChild(nodeReplacement, rootP);
         }
+        const startNd = this.getChildNodeByIndex(nodeReplacement, startIndex ? startIndex : 0);
+        const endNd = this.getChildNodeByIndex(nodeReplacement, endIndex ? endIndex : 0);
+        console.log("START>", startNd);
+        console.log("END  >", endNd);
+        const selRange = document.createRange();
+        selRange.setStart(startNd.node, startNd.offset);
+        selRange.setEnd(endNd.node, endNd.offset);
+        sel?.removeAllRanges();
+        sel?.addRange(selRange);
         this.setBold = !this.setBold;
     }
     setStyle(selection) {
@@ -314,6 +329,24 @@ class Editor {
                 return index;
             }
         }
+    }
+    getChildNodeByIndex(nd, index) {
+        if (nd.childNodes?.length) {
+            for (let i = 0; i < nd.childNodes.length; i++) {
+                const chNd = nd.childNodes[i];
+                const txtLength = chNd?.textContent?.length;
+                if (!txtLength) {
+                    continue;
+                }
+                // Second condition is to eliminate situation when start position
+                // is at the end of the node. In this case selection should start at the next node. 
+                if (index < txtLength || (i + 1 === nd.childNodes.length && index === txtLength)) {
+                    return this.getChildNodeByIndex(chNd, index);
+                }
+                index -= txtLength;
+            }
+        }
+        return { node: nd, offset: index };
     }
     isReverseSelection(anchorHierarchy, focusHierarchy, commonNode) {
         const maxDepth = Math.min(anchorHierarchy.length, focusHierarchy.length);

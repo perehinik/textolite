@@ -9,6 +9,11 @@ type SelectionAdj = {
     commonNode: Node,
 };
 
+type Position = {
+    node: Node,
+    offset: number
+};
+
 export class Editor {
     fieldId: number;
     elements: { [name: number]: HTMLElement };
@@ -39,7 +44,7 @@ export class Editor {
         this.setBold = true;
     }
 
-    createRootTextElement() {
+    createRootTextElement(): HTMLParagraphElement {
         const firstTextEl: HTMLParagraphElement = document.createElement("p");
         firstTextEl.contentEditable = "true";
         firstTextEl.id = "txt-root";
@@ -58,24 +63,26 @@ export class Editor {
         return false;
     }
 
-    getLastLeftChild(nd: Node){
+    getLastLeftChild(nd: Node): Node{
         while (nd.childNodes.length > 0 && nd.childNodes[0].textContent) {
             nd = nd.childNodes[0]
         }
         return nd;
     }
 
-    getLastRightChild(nd: Node){
+    getLastRightChild(nd: Node): Node{
         while (nd.childNodes.length > 0 && nd.childNodes[nd.childNodes.length - 1].textContent) {
             nd = nd.childNodes[nd.childNodes.length - 1]
         }
         return nd;
     }
 
-    settingsChanged() {
+    settingsChanged(): void {
         let sel = window.getSelection();
         let rootNode = document.getElementById(this.containerId);
+        let rootP = document.getElementById("txt-root");
         if (!sel || !sel.anchorNode || !sel.focusNode || !rootNode) {return;}
+
         const selIsOneNode = sel.anchorNode.isSameNode(sel.focusNode);
         // selection is empty
         if (selIsOneNode && sel.anchorOffset === sel.focusOffset) {return;}
@@ -97,6 +104,9 @@ export class Editor {
             endOffset: reverseSelection ? sel.anchorOffset : sel.focusOffset,
             commonNode: commonNode
         };
+
+        const startIndex = this.getIndex(selAdj.startNode, selAdj.startOffset, rootP as Node);
+        const endIndex = this.getIndex(selAdj.endNode, selAdj.endOffset, rootP as Node);
 
         // Fix situation when selection is out of root node.
         let startEndNodeUpdated = false;
@@ -143,23 +153,25 @@ export class Editor {
 
         this.setStyle(selAdj);
 
-        // Create new range and apply it to selection
-        const selRange = document.createRange();
-        selRange.setStart(selAdj.startNode, selAdj.startOffset);
-        selRange.setEnd(selAdj.endNode, selAdj.endOffset);
-        sel?.removeAllRanges();
-        sel?.addRange(selRange);
-
-        let rootP = document.getElementById("txt-root");
+        
         const nodeReplacement = rootP ? optimyzeNode(rootP) : null;
         if (rootP && nodeReplacement) {
             rootP.parentNode?.replaceChild(nodeReplacement, rootP)
         }
+        
+        const startNd = this.getChildNodeByIndex(nodeReplacement as Node, startIndex ? startIndex : 0);
+        const endNd = this.getChildNodeByIndex(nodeReplacement as Node, endIndex ? endIndex : 0);
+
+        const selRange = document.createRange();
+        selRange.setStart(startNd.node, startNd.offset);
+        selRange.setEnd(endNd.node, endNd.offset);
+        sel?.removeAllRanges();
+        sel?.addRange(selRange);
 
         this.setBold = !this.setBold;
     }
 
-    setStyle(selection: SelectionAdj) {
+    setStyle(selection: SelectionAdj): void {
         // If start and end nendNodeode are the same - selection in one node.
         if (selection.startNode.isSameNode(selection.endNode)) {
             this.updateNodeStyle(selection.startNode);
@@ -198,7 +210,7 @@ export class Editor {
         return nd;
     }
 
-    resetChildrenStyle(nd: Node){
+    resetChildrenStyle(nd: Node) : void{
         nd.childNodes.forEach(ndChild => {
             const el = ndChild as HTMLElement;
             if (el.style) { el.style.fontWeight = "";}
@@ -270,7 +282,7 @@ export class Editor {
         return prevNode;
     }
 
-    setStyleFromFocus(nd: Node, commonNode: Node) {
+    setStyleFromFocus(nd: Node, commonNode: Node): Node {
         const rootNode = document.getElementById(this.containerId);
         let currentNode = nd
         if (!currentNode) {return nd;}
@@ -294,7 +306,7 @@ export class Editor {
         return prevNode;
     }
 
-    getIndex(nd: Node | null, startOffset: number, rootNode: Node) : number | undefined{
+    getIndex(nd: Node | null, startOffset: number, rootNode: Node) : number | undefined {
         if (!nd?.parentElement ) {return;};
         let currentNode = nd;
         let index = 0;
@@ -328,6 +340,23 @@ export class Editor {
                 return index;
             }
         }
+    }
+
+    getChildNodeByIndex(nd: Node, index: number): Position {
+        if (nd.childNodes?.length) {
+            for (let i=0; i < nd.childNodes.length; i++) {
+                const chNd = nd.childNodes[i];
+                const txtLength = chNd?.textContent?.length;
+                if (!txtLength) { continue; }
+                // Second condition is to eliminate situation when start position
+                // is at the end of the node. In this case selection should start at the next node. 
+                if (index < txtLength || (i+1 === nd.childNodes.length && index === txtLength)) { 
+                    return this.getChildNodeByIndex(chNd, index);
+                }
+                index -= txtLength;
+            }
+        }
+        return {node: nd, offset: index} as Position;
     }
     
     isReverseSelection(anchorHierarchy: Node[], focusHierarchy: Node[], commonNode: Node) : boolean {
@@ -367,7 +396,7 @@ export class Editor {
         return nodeHierarchy;
     }
 
-    createSpan(spanId: number) {
+    createSpan(spanId: number): HTMLElement {
         const spanEl: HTMLElement = document.createElement("span");
         spanEl.contentEditable = "true";
         spanEl.id = `txt-sp-${spanId}`;

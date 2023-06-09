@@ -78,7 +78,7 @@ export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     return optimizationRezult;
 }
 
-function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CSSObj){
+function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CSSObj): void{
     if (!textContent) { return; }
     chNdType = chNdType ? chNdType : "TEXT";
     style = style ? style : {};
