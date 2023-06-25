@@ -1,21 +1,10 @@
 // Add tab handling
 import { optimyzeNode } from './OptimyzeDOM';
 import { Tools } from './ToolsPanel/Tools';
+import { SelectionAdj } from './SelectionAdj';
+import { restoreSelection } from './SelectionAdj';
+import { setStyle, CSSObj } from './Styling';
 
-type SelectionAdj = {
-    startNode: Node,
-    startOffset: number,
-    endNode: Node,
-    endOffset: number,
-    commonNode: Node,
-    startIndex?: number,
-    endIndex?: number
-};
-
-type Position = {
-    node: Node,
-    offset: number
-};
 
 export class Editor {
     fieldId: number;
@@ -23,10 +12,7 @@ export class Editor {
     containerId: string;
     tools: Tools;
 
-    setBold: boolean;
-
     constructor(divId: string) {
-        this.setStyle = this.setStyle.bind(this);
         this.setStyleFromObj = this.setStyleFromObj.bind(this);
 
         const rootEl = document.getElementById(divId);
@@ -50,10 +36,6 @@ export class Editor {
         rootEl?.appendChild(rootP);
         rootP?.appendChild(this.elements[0]);
         rootP?.appendChild(this.createSpan(2))
-
-        //this.settingsChanged = this.settingsChanged.bind(this);
-
-        this.setBold = true;
     }
 
     createRootTextElement(): HTMLParagraphElement {
@@ -165,87 +147,11 @@ export class Editor {
         return selAdj;
     }
 
-    restoreSelection(nd: Node, startIndex: number, endIndex: number): void {
-        let sel = window.getSelection();
-        const startNd = this.getChildNodeByIndex(nd, startIndex);
-        const endNd = this.getChildNodeByIndex(nd, endIndex);
-
-        const selRange = document.createRange();
-        selRange.setStart(startNd.node, startNd.offset);
-        selRange.setEnd(endNd.node, endNd.offset);
-        sel?.removeAllRanges();
-        sel?.addRange(selRange);
-    }
-
-    setStyleFromObj(newStyle: { [name: string]: string }) {
-        for(let key in newStyle) {
-            this.setStyle(key, newStyle[key]);
+    setStyleFromObj(newStyle: CSSObj) {
+        const selAdj = this.getAdjSelection();
+        if (selAdj) {
+            setStyle(selAdj, newStyle);
         }
-    }
-
-    setStyle(key: string, value: string): void {
-        let rootP = document.getElementById("txt-root");
-        let selAdj = this.getAdjSelection();
-        if (!selAdj) {return;}
-
-        // If start and end nendNodeode are the same - selection in one node.
-        if (selAdj.startNode.isSameNode(selAdj.endNode)) {
-            this.updateNodeStyle(selAdj.startNode, key, value);
-            return;
-        }
-        const rootAnchor = this.setStyleFromAnchor(selAdj.startNode, selAdj.commonNode, key, value);
-        const rootFocus = this.setStyleFromFocus(selAdj.endNode, selAdj.commonNode, key, value);
-        let node = rootAnchor?.nextSibling
-        while(node && !node.isSameNode(rootFocus)) {
-            this.updateNodeStyle(node, key, value);
-            this.resetChildrenStyle(node);
-            node = node.nextSibling;
-        }
-
-        // Optimize DOM structure after style update
-        const nodeReplacement = rootP ? optimyzeNode(rootP) : null;
-        if (rootP && nodeReplacement) {
-            rootP.parentNode?.replaceChild(nodeReplacement, rootP)
-        }
-        
-        // Because DOM structure may have been changed we need to update selection range
-        this.restoreSelection(
-            nodeReplacement as Node, 
-            selAdj.startIndex ? selAdj.startIndex : 0, 
-            selAdj.endIndex ? selAdj.endIndex : 0
-            );
-
-        this.setBold = !this.setBold;
-    }
-
-    updateNodeStyle(nd: Node, key: string, value: string) : Node {
-        const el = nd as HTMLElement;
-        // If node has style property then style can be changed directly
-        if (el.style) {
-            el.style.setProperty(key, value);
-        }
-        // Case when target node is the text node and it's the only node in parent node.
-        // In this case it should be safe to change parent style.
-        else if (nd.parentNode?.childNodes.length === 1 && (nd.parentNode as HTMLElement)?.style) {
-            this.updateNodeStyle(nd.parentNode, key, value);
-        // Case when target node is the text node but it's NOT the only node in parent node.
-        // So text node should be replaces with span in order to set style of this part of text.
-        } else {
-            const ndSpan = document.createElement("span");
-            ndSpan.textContent = nd.textContent;
-            this.updateNodeStyle(ndSpan, key, value)
-            nd.parentNode?.replaceChild(ndSpan, nd)
-            return ndSpan;
-        }
-        return nd;
-    }
-
-    resetChildrenStyle(nd: Node) : void{
-        nd.childNodes.forEach(ndChild => {
-            const el = ndChild as HTMLElement;
-            if (el.style) { el.style.fontWeight = "";}
-            this.resetChildrenStyle(ndChild);
-        })
     }
 
     splitStart(nd: Node, offset: number): Node {
@@ -288,54 +194,6 @@ export class Editor {
         return ndClone.childNodes[0];
     }
 
-    setStyleFromAnchor(nd: Node, commonNode: Node, key: string, value: string): Node | undefined {
-        const rootNode = document.getElementById(this.containerId);
-        let currentNode = nd;
-        if (!currentNode) {return nd;}
-        let prevNode: Node = currentNode;
-
-        currentNode = this.updateNodeStyle(currentNode, key, value)
-
-        do {
-            if (currentNode.nextSibling) {
-                if (currentNode?.parentNode?.isSameNode(commonNode)) {return currentNode;}
-                currentNode = currentNode.nextSibling as Node;
-                currentNode = this.updateNodeStyle(currentNode, key, value);
-                this.resetChildrenStyle(currentNode);
-            }
-            else {
-                prevNode = currentNode;
-                currentNode = currentNode.parentNode as Node;
-            }
-        } while (currentNode && !currentNode.isSameNode(commonNode) && !currentNode.isSameNode(rootNode))
-
-        return prevNode;
-    }
-
-    setStyleFromFocus(nd: Node, commonNode: Node, key: string, value: string): Node {
-        const rootNode = document.getElementById(this.containerId);
-        let currentNode = nd
-        if (!currentNode) {return nd;}
-        let prevNode: Node = currentNode;
-
-        currentNode = this.updateNodeStyle(currentNode, key, value)
-
-        do {
-            if (currentNode.previousSibling) {
-                if (currentNode?.parentNode?.isSameNode(commonNode)) {return currentNode;}
-                currentNode = currentNode.previousSibling as Node;
-                currentNode = this.updateNodeStyle(currentNode, key, value)
-                this.resetChildrenStyle(currentNode);
-            }
-            else {
-                prevNode = currentNode;
-                currentNode = currentNode.parentNode as Node;
-            }
-        } while (currentNode && !currentNode.isSameNode(commonNode) && !currentNode.isSameNode(rootNode))
-
-        return prevNode;
-    }
-
     getIndex(nd: Node | null, startOffset: number, rootNode: Node) : number | undefined {
         if (!nd?.parentElement ) {return;};
         let currentNode = nd;
@@ -370,23 +228,6 @@ export class Editor {
                 return index;
             }
         }
-    }
-
-    getChildNodeByIndex(nd: Node, index: number): Position {
-        if (nd.childNodes?.length) {
-            for (let i=0; i < nd.childNodes.length; i++) {
-                const chNd = nd.childNodes[i];
-                const txtLength = chNd?.textContent?.length;
-                if (!txtLength) { continue; }
-                // Second condition is to eliminate situation when start position
-                // is at the end of the node. In this case selection should start at the next node. 
-                if (index < txtLength || (i+1 === nd.childNodes.length && index === txtLength)) { 
-                    return this.getChildNodeByIndex(chNd, index);
-                }
-                index -= txtLength;
-            }
-        }
-        return {node: nd, offset: index} as Position;
     }
     
     isReverseSelection(anchorHierarchy: Node[], focusHierarchy: Node[], commonNode: Node) : boolean {

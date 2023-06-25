@@ -1,17 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Editor = void 0;
-// Add tab handling
-const OptimyzeDOM_1 = require("./OptimyzeDOM");
 const Tools_1 = require("./ToolsPanel/Tools");
+const Styling_1 = require("./Styling");
 class Editor {
     fieldId;
     elements;
     containerId;
     tools;
-    setBold;
     constructor(divId) {
-        this.setStyle = this.setStyle.bind(this);
         this.setStyleFromObj = this.setStyleFromObj.bind(this);
         const rootEl = document.getElementById(divId);
         if (rootEl) {
@@ -31,8 +28,6 @@ class Editor {
         rootEl?.appendChild(rootP);
         rootP?.appendChild(this.elements[0]);
         rootP?.appendChild(this.createSpan(2));
-        //this.settingsChanged = this.settingsChanged.bind(this);
-        this.setBold = true;
     }
     createRootTextElement() {
         const firstTextEl = document.createElement("p");
@@ -136,79 +131,11 @@ class Editor {
         }
         return selAdj;
     }
-    restoreSelection(nd, startIndex, endIndex) {
-        let sel = window.getSelection();
-        const startNd = this.getChildNodeByIndex(nd, startIndex);
-        const endNd = this.getChildNodeByIndex(nd, endIndex);
-        const selRange = document.createRange();
-        selRange.setStart(startNd.node, startNd.offset);
-        selRange.setEnd(endNd.node, endNd.offset);
-        sel?.removeAllRanges();
-        sel?.addRange(selRange);
-    }
     setStyleFromObj(newStyle) {
-        for (let key in newStyle) {
-            this.setStyle(key, newStyle[key]);
+        const selAdj = this.getAdjSelection();
+        if (selAdj) {
+            (0, Styling_1.setStyle)(selAdj, newStyle);
         }
-    }
-    setStyle(key, value) {
-        let rootP = document.getElementById("txt-root");
-        let selAdj = this.getAdjSelection();
-        if (!selAdj) {
-            return;
-        }
-        // If start and end nendNodeode are the same - selection in one node.
-        if (selAdj.startNode.isSameNode(selAdj.endNode)) {
-            this.updateNodeStyle(selAdj.startNode, key, value);
-            return;
-        }
-        const rootAnchor = this.setStyleFromAnchor(selAdj.startNode, selAdj.commonNode, key, value);
-        const rootFocus = this.setStyleFromFocus(selAdj.endNode, selAdj.commonNode, key, value);
-        let node = rootAnchor?.nextSibling;
-        while (node && !node.isSameNode(rootFocus)) {
-            this.updateNodeStyle(node, key, value);
-            this.resetChildrenStyle(node);
-            node = node.nextSibling;
-        }
-        // Optimize DOM structure after style update
-        const nodeReplacement = rootP ? (0, OptimyzeDOM_1.optimyzeNode)(rootP) : null;
-        if (rootP && nodeReplacement) {
-            rootP.parentNode?.replaceChild(nodeReplacement, rootP);
-        }
-        // Because DOM structure may have been changed we need to update selection range
-        this.restoreSelection(nodeReplacement, selAdj.startIndex ? selAdj.startIndex : 0, selAdj.endIndex ? selAdj.endIndex : 0);
-        this.setBold = !this.setBold;
-    }
-    updateNodeStyle(nd, key, value) {
-        const el = nd;
-        // If node has style property then style can be changed directly
-        if (el.style) {
-            el.style.setProperty(key, value);
-        }
-        // Case when target node is the text node and it's the only node in parent node.
-        // In this case it should be safe to change parent style.
-        else if (nd.parentNode?.childNodes.length === 1 && nd.parentNode?.style) {
-            this.updateNodeStyle(nd.parentNode, key, value);
-            // Case when target node is the text node but it's NOT the only node in parent node.
-            // So text node should be replaces with span in order to set style of this part of text.
-        }
-        else {
-            const ndSpan = document.createElement("span");
-            ndSpan.textContent = nd.textContent;
-            this.updateNodeStyle(ndSpan, key, value);
-            nd.parentNode?.replaceChild(ndSpan, nd);
-            return ndSpan;
-        }
-        return nd;
-    }
-    resetChildrenStyle(nd) {
-        nd.childNodes.forEach(ndChild => {
-            const el = ndChild;
-            if (el.style) {
-                el.style.fontWeight = "";
-            }
-            this.resetChildrenStyle(ndChild);
-        });
     }
     splitStart(nd, offset) {
         if (!nd.textContent || offset === 0) {
@@ -255,54 +182,6 @@ class Editor {
         }
         return ndClone.childNodes[0];
     }
-    setStyleFromAnchor(nd, commonNode, key, value) {
-        const rootNode = document.getElementById(this.containerId);
-        let currentNode = nd;
-        if (!currentNode) {
-            return nd;
-        }
-        let prevNode = currentNode;
-        currentNode = this.updateNodeStyle(currentNode, key, value);
-        do {
-            if (currentNode.nextSibling) {
-                if (currentNode?.parentNode?.isSameNode(commonNode)) {
-                    return currentNode;
-                }
-                currentNode = currentNode.nextSibling;
-                currentNode = this.updateNodeStyle(currentNode, key, value);
-                this.resetChildrenStyle(currentNode);
-            }
-            else {
-                prevNode = currentNode;
-                currentNode = currentNode.parentNode;
-            }
-        } while (currentNode && !currentNode.isSameNode(commonNode) && !currentNode.isSameNode(rootNode));
-        return prevNode;
-    }
-    setStyleFromFocus(nd, commonNode, key, value) {
-        const rootNode = document.getElementById(this.containerId);
-        let currentNode = nd;
-        if (!currentNode) {
-            return nd;
-        }
-        let prevNode = currentNode;
-        currentNode = this.updateNodeStyle(currentNode, key, value);
-        do {
-            if (currentNode.previousSibling) {
-                if (currentNode?.parentNode?.isSameNode(commonNode)) {
-                    return currentNode;
-                }
-                currentNode = currentNode.previousSibling;
-                currentNode = this.updateNodeStyle(currentNode, key, value);
-                this.resetChildrenStyle(currentNode);
-            }
-            else {
-                prevNode = currentNode;
-                currentNode = currentNode.parentNode;
-            }
-        } while (currentNode && !currentNode.isSameNode(commonNode) && !currentNode.isSameNode(rootNode));
-        return prevNode;
-    }
     getIndex(nd, startOffset, rootNode) {
         if (!nd?.parentElement) {
             return;
@@ -336,24 +215,6 @@ class Editor {
                 return index;
             }
         }
-    }
-    getChildNodeByIndex(nd, index) {
-        if (nd.childNodes?.length) {
-            for (let i = 0; i < nd.childNodes.length; i++) {
-                const chNd = nd.childNodes[i];
-                const txtLength = chNd?.textContent?.length;
-                if (!txtLength) {
-                    continue;
-                }
-                // Second condition is to eliminate situation when start position
-                // is at the end of the node. In this case selection should start at the next node. 
-                if (index < txtLength || (i + 1 === nd.childNodes.length && index === txtLength)) {
-                    return this.getChildNodeByIndex(chNd, index);
-                }
-                index -= txtLength;
-            }
-        }
-        return { node: nd, offset: index };
     }
     isReverseSelection(anchorHierarchy, focusHierarchy, commonNode) {
         const maxDepth = Math.min(anchorHierarchy.length, focusHierarchy.length);

@@ -1,4 +1,7 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.optimyzeNode = void 0;
+const Styling_1 = require("./Styling");
 /*
 DOM optimization by style.
 
@@ -11,8 +14,6 @@ Removes child nodes with same stayle as parent's.
 
 Same logic shoul be applied from deapest node to target node(depth first.)
 */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.optimyzeNode = void 0;
 // returns replacement node for provided node or nothing.
 function optimyzeNode(nd, parentStyle) {
     // if it's a leaf
@@ -26,7 +27,7 @@ function optimyzeNode(nd, parentStyle) {
     let segmentText = "";
     let segmentType = "TEXT";
     let segmentStyle = {};
-    const ndStyle = getStyle(nd);
+    const ndStyle = (0, Styling_1.getStyle)(nd);
     for (let childId = 0; childId < nd.childNodes.length; childId++) {
         const childNd = nd.childNodes[childId]; // as HTMLElement;
         if (!childNd.textContent) {
@@ -35,8 +36,8 @@ function optimyzeNode(nd, parentStyle) {
         // This can return text node(concatenated) if style of childNd and all it's children
         // is the same as childNd.parentNode
         // Otherwise it should return nothing or modified copy of childNd.
-        const chNdReplace = optimyzeNode(childNd, concatStyles(parentStyle, ndStyle));
-        const chNdReplaceStyle = getStyle(chNdReplace);
+        const chNdReplace = optimyzeNode(childNd, (0, Styling_1.concatStyles)(parentStyle, ndStyle));
+        const chNdReplaceStyle = (0, Styling_1.getStyle)(chNdReplace);
         const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
         //console.log(nodeType, childNd.textContent, chNdReplaceStyle, segmentType, segmentStyle)
         // This should be removed in order to implement other node types.
@@ -52,7 +53,7 @@ function optimyzeNode(nd, parentStyle) {
             segmentStyle = {};
         }
         // Node has same style as previous sibling so can be merged with it.
-        else if (nodeType === segmentType && compareNodeStyles(segmentStyle, chNdReplaceStyle)) {
+        else if (nodeType === segmentType && (0, Styling_1.compareNodeStyles)(segmentStyle, chNdReplaceStyle)) {
             segmentText += childNd.textContent;
             continue;
             // Node is different from previous sibling so new segment should be started.
@@ -66,7 +67,7 @@ function optimyzeNode(nd, parentStyle) {
     }
     // No nested SPANs, just text
     if (!optimizationRezult.childNodes.length) {
-        if (nd.parentNode && compareChildStyle(parentStyle, ndStyle) || segmentText === "") {
+        if (nd.parentNode && (0, Styling_1.compareChildStyle)(parentStyle, ndStyle) || segmentText === "") {
             return document.createTextNode(segmentText);
         }
         else {
@@ -100,45 +101,4 @@ function addChild(pNd, chNdType, textContent, style) {
         }
         pNd.appendChild(ndNew);
     }
-}
-function getStyle(nd) {
-    const ndStyle = {};
-    if (nd?.style?.length) {
-        for (let styleId = 0; styleId < nd.style.length; styleId++) {
-            const stylePropName = nd.style[styleId];
-            ndStyle[stylePropName] = nd.style.getPropertyValue(stylePropName);
-        }
-    }
-    return ndStyle;
-}
-function concatStyles(parentStyle, childStyle) {
-    const chNdStyle = { ...parentStyle };
-    if (childStyle) {
-        for (let styleName in childStyle) {
-            chNdStyle[styleName] = childStyle[styleName];
-        }
-    }
-    return chNdStyle;
-}
-function compareChildStyle(parentStyle, childStyle) {
-    if (!parentStyle && childStyle) {
-        return false;
-    }
-    for (let cssName in childStyle) {
-        if (parentStyle && parentStyle[cssName] !== childStyle[cssName]) {
-            return false;
-        }
-    }
-    return true;
-}
-function compareNodeStyles(Style1, Style2) {
-    if (Object.keys(Style1).length !== Object.keys(Style2).length) {
-        return false;
-    }
-    for (let cssName in Style1) {
-        if (Style1[cssName] !== Style2[cssName]) {
-            return false;
-        }
-    }
-    return true;
 }

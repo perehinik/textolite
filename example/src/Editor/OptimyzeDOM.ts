@@ -1,3 +1,5 @@
+import { CSSObj, getStyle, concatStyles, compareChildStyle, compareNodeStyles } from './Styling'
+
 /*
 DOM optimization by style.
 
@@ -10,8 +12,6 @@ Removes child nodes with same stayle as parent's.
 
 Same logic shoul be applied from deapest node to target node(depth first.)
 */
-
-type CSSObj = { [name: string]: string };
 
 // returns replacement node for provided node or nothing.
 export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
@@ -78,7 +78,7 @@ export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     return optimizationRezult;
 }
 
-function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CSSObj): void{
+function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CSSObj): void {
     if (!textContent) { return; }
     chNdType = chNdType ? chNdType : "TEXT";
     style = style ? style : {};
@@ -93,41 +93,4 @@ function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CS
         }
         pNd.appendChild(ndNew);
     }
-}
-
-function getStyle(nd?: HTMLElement): CSSObj {
-    const ndStyle: CSSObj = {};
-    if (nd?.style?.length) {
-        for (let styleId = 0; styleId < nd.style.length; styleId ++) {
-            const stylePropName: string = nd.style[styleId];
-            ndStyle[stylePropName] = nd.style.getPropertyValue(stylePropName);
-        }
-    }
-    return ndStyle;
-}
-
-function concatStyles(parentStyle?: CSSObj, childStyle?: CSSObj): CSSObj {
-    const chNdStyle: CSSObj = {...parentStyle};
-    if (childStyle) {
-        for (let styleName in childStyle) {
-            chNdStyle[styleName] = childStyle[styleName];
-        }
-    }
-    return chNdStyle;
-}
-
-function compareChildStyle(parentStyle?: CSSObj, childStyle?: CSSObj): boolean {
-    if (!parentStyle && childStyle) {return false;}
-    for (let cssName in childStyle) {
-        if (parentStyle && parentStyle[cssName] !== childStyle[cssName]) {return false;}
-    }
-    return true;
-}
-
-function compareNodeStyles(Style1: CSSObj, Style2: CSSObj): boolean {
-    if (Object.keys(Style1).length !== Object.keys(Style2).length) {return false;}
-    for (let cssName in Style1) {
-        if (Style1[cssName] !== Style2[cssName]) {return false;}
-    }
-    return true;
 }
