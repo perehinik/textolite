@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Editor = void 0;
 const Tools_1 = require("./ToolsPanel/Tools");
+const SelectionAdj_1 = require("./SelectionAdj");
 const Styling_1 = require("./Styling");
+const DOMTools_1 = require("./DOMTools");
 class Editor {
     fieldId;
     elements;
@@ -59,7 +61,7 @@ class Editor {
         }
         return nd;
     }
-    getAdjSelection() {
+    getAdjSelection(splitNodes = false) {
         let sel = window.getSelection();
         let rootNode = document.getElementById(this.containerId);
         let rootP = document.getElementById("txt-root");
@@ -67,16 +69,12 @@ class Editor {
             return;
         }
         const selIsOneNode = sel.anchorNode.isSameNode(sel.focusNode);
-        // selection is empty
-        if (selIsOneNode && sel.anchorOffset === sel.focusOffset) {
-            return;
-        }
         let commonNode = sel.anchorNode.parentNode ? sel.anchorNode.parentNode : sel.anchorNode;
-        let reverseSelection = sel.anchorOffset < sel.focusOffset ? false : true;
+        let reverseSelection = sel.anchorOffset < sel.focusOffset || selIsOneNode ? false : true;
         if (!selIsOneNode) {
-            let anchorHierarchy = this.getNodeHierarchy(sel.anchorNode, rootNode).reverse();
-            let focusHierarchy = this.getNodeHierarchy(sel.focusNode, rootNode).reverse();
-            commonNode = this.getCommonNode(anchorHierarchy, focusHierarchy);
+            let anchorHierarchy = (0, DOMTools_1.getNodeHierarchy)(sel.anchorNode, rootNode);
+            let focusHierarchy = (0, DOMTools_1.getNodeHierarchy)(sel.focusNode, rootNode);
+            commonNode = (0, DOMTools_1.getCommonNode)(anchorHierarchy, focusHierarchy);
             reverseSelection = this.isReverseSelection(anchorHierarchy, focusHierarchy, commonNode);
         }
         let selAdj = {
@@ -84,8 +82,12 @@ class Editor {
             startOffset: reverseSelection ? sel.focusOffset : sel.anchorOffset,
             endNode: reverseSelection ? sel.anchorNode : sel.focusNode,
             endOffset: reverseSelection ? sel.anchorOffset : sel.focusOffset,
-            commonNode: commonNode
+            commonNode: commonNode,
+            isEmpty: (selIsOneNode && sel.anchorOffset === sel.focusOffset)
         };
+        if (selAdj.isEmpty) {
+            return selAdj;
+        }
         selAdj.startIndex = this.getIndex(selAdj.startNode, selAdj.startOffset, rootP);
         selAdj.endIndex = this.getIndex(selAdj.endNode, selAdj.endOffset, rootP);
         // Fix situation when selection is out of root node.
@@ -107,12 +109,14 @@ class Editor {
             }
             commonNode = selAdj.startNode.parentNode ? selAdj.startNode.parentNode : selAdj.startNode;
             if (!selIsOneNode) {
-                let anchorHierarchy = this.getNodeHierarchy(selAdj.startNode, rootNode).reverse();
-                let focusHierarchy = this.getNodeHierarchy(selAdj.endNode, rootNode).reverse();
-                commonNode = this.getCommonNode(anchorHierarchy, focusHierarchy);
+                let anchorHierarchy = (0, DOMTools_1.getNodeHierarchy)(selAdj.startNode, rootNode);
+                let focusHierarchy = (0, DOMTools_1.getNodeHierarchy)(selAdj.endNode, rootNode);
+                commonNode = (0, DOMTools_1.getCommonNode)(anchorHierarchy, focusHierarchy);
                 selAdj.commonNode = commonNode;
             }
         }
+        if (!splitNodes)
+            return (0, SelectionAdj_1.fixSelectionEnd)(selAdj);
         // Check if selection is on the middle of some node.
         // If yes, then that node should be splitted in order to be able to apply style
         // only on part of node.
@@ -129,13 +133,21 @@ class Editor {
             selAdj.startOffset = 0;
             selAdj.endOffset = selAdj.endNode.textContent ? selAdj.endNode.textContent.length : 0;
         }
-        return selAdj;
+        return (0, SelectionAdj_1.fixSelectionEnd)(selAdj);
     }
     setStyleFromObj(newStyle) {
-        const selAdj = this.getAdjSelection();
-        if (selAdj) {
+        let selAdj = this.getAdjSelection(true);
+        if (selAdj && !selAdj.isEmpty) {
             (0, Styling_1.setStyle)(selAdj, newStyle);
         }
+        selAdj = this.getAdjSelection();
+        if (selAdj) {
+            console.log((0, Styling_1.getNestedStyle)(selAdj));
+            if (selAdj.isEmpty) {
+                (0, SelectionAdj_1.restoreSelection)(selAdj.startNode, selAdj.startOffset, selAdj.endOffset);
+            }
+        }
+        //ToDo IP: Modify selAdj and dependencies to handle empty selections
     }
     splitStart(nd, offset) {
         if (!nd.textContent || offset === 0) {
@@ -234,23 +246,6 @@ class Editor {
             }
         }
         return false;
-    }
-    getCommonNode(anchorHierarchy, focusHierarchy) {
-        const maxDepth = Math.min(anchorHierarchy.length, focusHierarchy.length);
-        for (let depth = 1; depth < maxDepth; depth++) {
-            if (!anchorHierarchy[depth].isSameNode(focusHierarchy[depth])) {
-                return anchorHierarchy[depth - 1];
-            }
-        }
-        return anchorHierarchy[maxDepth - 1];
-    }
-    getNodeHierarchy(nd, rootNode) {
-        let nodeHierarchy = [nd];
-        while (nd.parentNode && !nd.isSameNode(rootNode)) {
-            nd = nd.parentNode;
-            nodeHierarchy.push(nd);
-        }
-        return nodeHierarchy;
     }
     createSpan(spanId) {
         const spanEl = document.createElement("span");

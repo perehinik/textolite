@@ -1,6 +1,7 @@
 import { SelectionAdj } from "./SelectionAdj";
 import { optimyzeNode } from './OptimyzeDOM';
 import { restoreSelection } from "./SelectionAdj";
+import { getNodeHierarchy, getCommonNode } from "./DOMTools";
 
 export type CSSObj = { [name: string]: string };
 
@@ -16,12 +17,82 @@ export function getStyle(nd?: HTMLElement): CSSObj {
     return ndStyle;
 }
 
-// Returns style of specified node and all children.
-// If for some property there are multiple styles - returns '-\!/-'
-export function getNestedStyle(sel: SelectionAdj): CSSObj {
-    const style: CSSObj = {};
-    return style;
+// Returns node style with consideration of styles of all parent nodes.
+export function getStyleFromRoot(nd: Node): CSSObj {
+    const ndHierarchy = getNodeHierarchy(nd, document.body);
+    let ndStyle = {} as CSSObj;
+    ndHierarchy.forEach((item) => {
+        const chStyle = getStyle(item as HTMLElement);
+        ndStyle = concatStyles(ndStyle, chStyle);
+    })
+    return ndStyle;
+}
+
+function combineNestedStyles(style1: CSSObj, style2?: CSSObj): CSSObj {
+    const res = {...style1};
+    if (!style2) {return res;}
+    for (let key in style2) {
+        if (!Object.keys(style1).includes(key) || style1[key] !== style2[key]) {
+            res[key] = '*x*';
+        }
+    }
+    for (let key in style1) {
+        if (!Object.keys(style2).includes(key)) {
+            res[key] = '*x*';
+        }
+    }
+    return res;
+}
+
+// Returns nested style for specified node.
+// CSSObj -> initial style.
+// limitList -> nodeHierarchy with nodes which are limiting nodes range.
+// startLimited -> if true = styles are collectred only after spotting node which is in limitList
+// endLimited -> if true = styles are not collectred after spotting node which is in limitList
+function getNodeNestedStyle(nd: Node, style: CSSObj, limitListStart: Node[], limitListEnd: Node[], startLimited: boolean, endLimited: boolean): CSSObj | undefined  {
+    if (nd.nodeType === Node.TEXT_NODE) { return style; } // end of recursion
+    if (!nd.childNodes) { return }
+
+    const ndStyle = concatStyles(style, getStyle(nd as HTMLElement));
+    let result: CSSObj | undefined = undefined;
+    let startFound = !startLimited;
     
+    for (let ndI = 0; ndI < nd.childNodes.length; ndI ++) {
+        const chNd = nd.childNodes[ndI];
+        const thisIsEndNode = endLimited && startFound && limitListEnd.includes(chNd);
+        let chStyle: CSSObj | undefined = undefined;
+        if (startFound) {
+            chStyle = getNodeNestedStyle(chNd, ndStyle, limitListStart, limitListEnd, false, thisIsEndNode);
+        } else if (limitListStart.includes(chNd)) {
+            // No need to check if start is limited, if it went here - start is limited.
+            startFound = true;
+            chStyle = getNodeNestedStyle(chNd, ndStyle, limitListStart, limitListEnd, true, false);
+        }
+        if (chStyle) {
+            result = combineNestedStyles(chStyle, result);
+        }
+        if (thisIsEndNode) { break; }
+    }
+
+    return result;
+}
+
+// Returns style of specified node and all children.
+// If for some property there are multiple styles - returns '*x*'
+export function getNestedStyle(sel: SelectionAdj): CSSObj {
+    const commonNodeStyle = getStyleFromRoot(sel.commonNode);
+    
+    if (sel.isEmpty) {
+        const chStyle = getStyle(sel.startNode as HTMLElement);
+        return concatStyles(commonNodeStyle, chStyle);
+    }
+
+    const startHierarchy = getNodeHierarchy(sel.startNode, sel.commonNode);
+    const endHierarchy = getNodeHierarchy(sel.endNode, sel.commonNode);
+    const limitList = startHierarchy.concat(endHierarchy);
+    const style = getNodeNestedStyle(sel.commonNode, commonNodeStyle, startHierarchy, endHierarchy, true, true);
+
+    return style ? style : commonNodeStyle;
 }
 
 // If child node has text type then it uses parent node style
@@ -83,7 +154,7 @@ export function setStyle(sel: SelectionAdj, style: CSSObj): void {
         updateNodeStyle(sel.startNode, style);
         return;
     }
-    const rootAnchor = setStyleFromStart(sel, style);
+    const rootAnchor = setStyleFromStart(sel, style); 
     const rootFocus = setStyleFromEnd(sel, style);
     let node = rootAnchor?.nextSibling
     while(node && !node.isSameNode(rootFocus)) {

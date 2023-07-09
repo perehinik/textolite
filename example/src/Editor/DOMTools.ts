@@ -19,3 +19,25 @@ export function getChildNodeByIndex(nd: Node, index: number): Position {
     }
     return {node: nd, offset: index} as Position;
 }
+
+// Returns node chain from specified node to root node. 
+export function getNodeHierarchy(nd: Node, rootNode: Node): Node[] {
+    let nodeHierarchy: Node[] = [nd] 
+    while(nd.parentNode && !nd.isSameNode(rootNode)) {
+        nd = nd.parentNode;
+        nodeHierarchy.push(nd);
+    }
+    return nodeHierarchy.reverse();
+}
+
+// Get node where hierarchies split.
+export function getCommonNode(startHierarchy: Node[], endHierarchy: Node[]) : Node {
+    const maxDepth = Math.min(startHierarchy.length, endHierarchy.length)
+
+    for (let depth=1; depth<maxDepth; depth++) {
+        if (!startHierarchy[depth].isSameNode(endHierarchy[depth])) {
+            return startHierarchy[depth-1]
+        }
+    }
+    return startHierarchy[maxDepth-1];
+}
