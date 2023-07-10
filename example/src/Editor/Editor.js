@@ -12,6 +12,7 @@ class Editor {
     tools;
     constructor(divId) {
         this.setStyleFromObj = this.setStyleFromObj.bind(this);
+        this.selectionChanged = this.selectionChanged.bind(this);
         const rootEl = document.getElementById(divId);
         if (rootEl) {
             rootEl.innerHTML = '';
@@ -21,15 +22,30 @@ class Editor {
         rootEl?.appendChild(toolsNd);
         this.fieldId = 0;
         this.containerId = divId;
+        const editrNd = document.createElement("div");
+        rootEl?.appendChild(editrNd);
         const rootP = this.createRootTextElement();
         this.elements = {
             [this.fieldId]: this.createSpan(this.fieldId)
         };
         this.fieldId += 1;
         this.elements[0].appendChild(this.createSpan(10));
-        rootEl?.appendChild(rootP);
+        editrNd?.appendChild(rootP);
         rootP?.appendChild(this.elements[0]);
         rootP?.appendChild(this.createSpan(2));
+        editrNd.addEventListener('mouseup', this.selectionChanged);
+    }
+    selectionChanged(ev) {
+        console.log('mouseup handler');
+        const selAdj = this.getAdjSelection(false);
+        if (selAdj) {
+            const style = (0, Styling_1.getNestedStyle)(selAdj);
+            console.log(style);
+            this.tools.silentUpdate(style);
+            if (selAdj.isEmpty) {
+                (0, SelectionAdj_1.restoreSelection)(selAdj.startNode, selAdj.startOffset, selAdj.endOffset);
+            }
+        }
     }
     createRootTextElement() {
         const firstTextEl = document.createElement("p");
@@ -140,14 +156,6 @@ class Editor {
         if (selAdj && !selAdj.isEmpty) {
             (0, Styling_1.setStyle)(selAdj, newStyle);
         }
-        selAdj = this.getAdjSelection();
-        if (selAdj) {
-            console.log((0, Styling_1.getNestedStyle)(selAdj));
-            if (selAdj.isEmpty) {
-                (0, SelectionAdj_1.restoreSelection)(selAdj.startNode, selAdj.startOffset, selAdj.endOffset);
-            }
-        }
-        //ToDo IP: Modify selAdj and dependencies to handle empty selections
     }
     splitStart(nd, offset) {
         if (!nd.textContent || offset === 0) {

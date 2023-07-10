@@ -1,4 +1,4 @@
-import { CSSObj, getStyle, concatStyles, compareChildStyle, compareNodeStyles } from './Styling'
+import { CSSObj, getStyle, applyOverlappingStyle, compareChildStyle, compareNodeStyles } from './Styling'
 
 /*
 DOM optimization by style.
@@ -32,7 +32,7 @@ export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         // This can return text node(concatenated) if style of childNd and all it's children
         // is the same as childNd.parentNode
         // Otherwise it should return nothing or modified copy of childNd.
-        const chNdReplace = optimyzeNode(childNd, concatStyles(parentStyle, ndStyle));
+        const chNdReplace = optimyzeNode(childNd, applyOverlappingStyle(parentStyle, ndStyle));
         const chNdReplaceStyle = getStyle(chNdReplace as HTMLElement);
         const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
 

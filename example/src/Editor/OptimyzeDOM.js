@@ -36,7 +36,7 @@ function optimyzeNode(nd, parentStyle) {
         // This can return text node(concatenated) if style of childNd and all it's children
         // is the same as childNd.parentNode
         // Otherwise it should return nothing or modified copy of childNd.
-        const chNdReplace = optimyzeNode(childNd, (0, Styling_1.concatStyles)(parentStyle, ndStyle));
+        const chNdReplace = optimyzeNode(childNd, (0, Styling_1.applyOverlappingStyle)(parentStyle, ndStyle));
         const chNdReplaceStyle = (0, Styling_1.getStyle)(chNdReplace);
         const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
         //console.log(nodeType, childNd.textContent, chNdReplaceStyle, segmentType, segmentStyle)

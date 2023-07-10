@@ -5,6 +5,12 @@ import { getNodeHierarchy, getCommonNode } from "./DOMTools";
 
 export type CSSObj = { [name: string]: string };
 
+export const defaultStyle: CSSObj = {
+    'font-weight': 'normal',
+    'font-style': 'normal',
+    'text-decoration': 'none'
+}
+
 // Returns style of single object, without children.
 export function getStyle(nd?: HTMLElement): CSSObj {
     const ndStyle: CSSObj = {};
@@ -23,7 +29,7 @@ export function getStyleFromRoot(nd: Node): CSSObj {
     let ndStyle = {} as CSSObj;
     ndHierarchy.forEach((item) => {
         const chStyle = getStyle(item as HTMLElement);
-        ndStyle = concatStyles(ndStyle, chStyle);
+        ndStyle = applyOverlappingStyle(ndStyle, chStyle);
     })
     return ndStyle;
 }
@@ -53,7 +59,7 @@ function getNodeNestedStyle(nd: Node, style: CSSObj, limitListStart: Node[], lim
     if (nd.nodeType === Node.TEXT_NODE) { return style; } // end of recursion
     if (!nd.childNodes) { return }
 
-    const ndStyle = concatStyles(style, getStyle(nd as HTMLElement));
+    const ndStyle = applyOverlappingStyle(style, getStyle(nd as HTMLElement));
     let result: CSSObj | undefined = undefined;
     let startFound = !startLimited;
     
@@ -84,7 +90,7 @@ export function getNestedStyle(sel: SelectionAdj): CSSObj {
     
     if (sel.isEmpty) {
         const chStyle = getStyle(sel.startNode as HTMLElement);
-        return concatStyles(commonNodeStyle, chStyle);
+        return applyOverlappingStyle(commonNodeStyle, chStyle);
     }
 
     const startHierarchy = getNodeHierarchy(sel.startNode, sel.commonNode);
@@ -257,7 +263,7 @@ function setStyleFromEnd(sel: SelectionAdj, newStyle: CSSObj): Node {
     return prevNode;
 }   
 
-export function concatStyles(parentStyle?: CSSObj, childStyle?: CSSObj): CSSObj {
+export function applyOverlappingStyle(parentStyle?: CSSObj, childStyle?: CSSObj): CSSObj {
     const chNdStyle: CSSObj = {...parentStyle};
     if (childStyle) {
         for (let styleName in childStyle) {

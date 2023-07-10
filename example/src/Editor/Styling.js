@@ -1,9 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.compareNodeStyles = exports.compareChildStyle = exports.concatStyles = exports.setStyle = exports.getNestedStyle = exports.getStyleFromRoot = exports.getStyle = void 0;
+exports.compareNodeStyles = exports.compareChildStyle = exports.applyOverlappingStyle = exports.setStyle = exports.getNestedStyle = exports.getStyleFromRoot = exports.getStyle = exports.defaultStyle = void 0;
 const OptimyzeDOM_1 = require("./OptimyzeDOM");
 const SelectionAdj_1 = require("./SelectionAdj");
 const DOMTools_1 = require("./DOMTools");
+exports.defaultStyle = {
+    'font-weight': 'normal',
+    'font-style': 'normal',
+    'text-decoration': 'none'
+};
 // Returns style of single object, without children.
 function getStyle(nd) {
     const ndStyle = {};
@@ -22,7 +27,7 @@ function getStyleFromRoot(nd) {
     let ndStyle = {};
     ndHierarchy.forEach((item) => {
         const chStyle = getStyle(item);
-        ndStyle = concatStyles(ndStyle, chStyle);
+        ndStyle = applyOverlappingStyle(ndStyle, chStyle);
     });
     return ndStyle;
 }
@@ -56,7 +61,7 @@ function getNodeNestedStyle(nd, style, limitListStart, limitListEnd, startLimite
     if (!nd.childNodes) {
         return;
     }
-    const ndStyle = concatStyles(style, getStyle(nd));
+    const ndStyle = applyOverlappingStyle(style, getStyle(nd));
     let result = undefined;
     let startFound = !startLimited;
     for (let ndI = 0; ndI < nd.childNodes.length; ndI++) {
@@ -86,7 +91,7 @@ function getNestedStyle(sel) {
     const commonNodeStyle = getStyleFromRoot(sel.commonNode);
     if (sel.isEmpty) {
         const chStyle = getStyle(sel.startNode);
-        return concatStyles(commonNodeStyle, chStyle);
+        return applyOverlappingStyle(commonNodeStyle, chStyle);
     }
     const startHierarchy = (0, DOMTools_1.getNodeHierarchy)(sel.startNode, sel.commonNode);
     const endHierarchy = (0, DOMTools_1.getNodeHierarchy)(sel.endNode, sel.commonNode);
@@ -252,7 +257,7 @@ function setStyleFromEnd(sel, newStyle) {
     } while (currentNode && !currentNode.isSameNode(sel.commonNode) && (!rootNode || !currentNode.isSameNode(rootNode)));
     return prevNode;
 }
-function concatStyles(parentStyle, childStyle) {
+function applyOverlappingStyle(parentStyle, childStyle) {
     const chNdStyle = { ...parentStyle };
     if (childStyle) {
         for (let styleName in childStyle) {
@@ -261,7 +266,7 @@ function concatStyles(parentStyle, childStyle) {
     }
     return chNdStyle;
 }
-exports.concatStyles = concatStyles;
+exports.applyOverlappingStyle = applyOverlappingStyle;
 function compareChildStyle(parentStyle, childStyle) {
     if (!parentStyle && childStyle) {
         return false;
