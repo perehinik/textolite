@@ -6,6 +6,7 @@ function restoreSelection(nd, startIndex, endIndex) {
     let sel = window.getSelection();
     const startNd = (0, DOMTools_1.getChildNodeByIndex)(nd, startIndex);
     const endNd = (0, DOMTools_1.getChildNodeByIndex)(nd, endIndex);
+    console.log("=>", startNd.node, startNd.offset, endNd.node, endNd.offset);
     const selRange = document.createRange();
     selRange.setStart(startNd.node, startNd.offset);
     selRange.setEnd(endNd.node, endNd.offset);

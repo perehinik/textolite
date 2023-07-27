@@ -17,6 +17,18 @@ class Tools {
         this.styleChanged = this.styleChanged.bind(this);
         this.boldButton = new Button_1.Button(icons_1.bold, { 'font-weight': 'bold' }, { 'font-weight': 'normal' }, this.styleChanged);
         this.italicButton = new Button_1.Button(icons_1.italic, { 'font-style': 'italic' }, { 'font-style': 'normal' }, this.styleChanged);
+        const underlineStyle = {
+            'text-decoration': 'underline',
+            //'text-decoration-thickness': 'initial',
+            //'text-decoration-style': 'initial',
+            //'text-decoration-color': 'initial',
+        };
+        const decorastionOff = {
+            'text-decoration': 'overline',
+            //'text-decoration-thickness': 'initial',
+            //text-decoration-style': 'initial',
+            //'text-decoration-color': 'initial',
+        };
         this.underlineButton = new Button_1.Button(icons_1.underline, { 'text-decoration': 'underline' }, { 'text-decoration': 'none' }, this.styleChanged);
         toolsDivNd?.appendChild(this.boldButton.btEl);
         toolsDivNd?.appendChild(this.italicButton.btEl);

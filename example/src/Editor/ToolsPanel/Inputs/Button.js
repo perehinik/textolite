@@ -21,6 +21,8 @@ class Button {
         this.btEl.style.padding = "none";
         this.btEl.style.backgroundColor = "transparent";
         this.onClickHandler = this.onClickHandler.bind(this);
+        // preventDefault -> prevent focus to go from text editor to button.
+        this.btEl.onmousedown = (event) => { event.preventDefault(); };
         this.btEl.addEventListener("click", this.onClickHandler, false);
     }
     onClickHandler(event) {

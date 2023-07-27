@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.compareNodeStyles = exports.compareChildStyle = exports.applyOverlappingStyle = exports.setStyle = exports.getNestedStyle = exports.getStyleFromRoot = exports.getStyle = exports.defaultStyle = void 0;
+exports.compareNodeStyles = exports.compareChildStyle = exports.applyOverlappingStyle = exports.updateNodeStyle = exports.setStyle = exports.getNestedStyle = exports.getStyleFromRoot = exports.getStyle = exports.defaultStyle = void 0;
 const OptimyzeDOM_1 = require("./OptimyzeDOM");
 const SelectionAdj_1 = require("./SelectionAdj");
 const DOMTools_1 = require("./DOMTools");
@@ -157,14 +157,16 @@ function setStyle(sel, style) {
     // If start and end nendNodeode are the same - selection in one node.
     if (sel.startNode.isSameNode(sel.endNode)) {
         updateNodeStyle(sel.startNode, style);
+        (0, SelectionAdj_1.restoreSelection)(sel.startNode, sel.startOffset, sel.endOffset);
         return;
     }
     const rootAnchor = setStyleFromStart(sel, style);
     const rootFocus = setStyleFromEnd(sel, style);
     let node = rootAnchor?.nextSibling;
     while (node && !node.isSameNode(rootFocus)) {
+        console.log("middle:", node.textContent);
         updateNodeStyle(node, style);
-        resetChildrenStyle(node);
+        resetChildrenStyle(node, style);
         node = node.nextSibling;
     }
     // Optimize DOM structure after style update
@@ -200,13 +202,16 @@ function updateNodeStyle(nd, newStyle) {
     }
     return nd;
 }
-function resetChildrenStyle(nd) {
+exports.updateNodeStyle = updateNodeStyle;
+function resetChildrenStyle(nd, newStyle) {
     nd.childNodes.forEach(ndChild => {
         const el = ndChild;
         if (el.style) {
-            el.style.fontWeight = "";
+            for (let key in newStyle) {
+                el.style.setProperty(key, "");
+            }
         }
-        resetChildrenStyle(ndChild);
+        resetChildrenStyle(ndChild, newStyle);
     });
 }
 function setStyleFromStart(sel, newStyle) {
@@ -224,7 +229,7 @@ function setStyleFromStart(sel, newStyle) {
             }
             currentNode = currentNode.nextSibling;
             currentNode = updateNodeStyle(currentNode, newStyle);
-            resetChildrenStyle(currentNode);
+            resetChildrenStyle(currentNode, newStyle);
         }
         else {
             prevNode = currentNode;
@@ -248,7 +253,7 @@ function setStyleFromEnd(sel, newStyle) {
             }
             currentNode = currentNode.previousSibling;
             currentNode = updateNodeStyle(currentNode, newStyle);
-            resetChildrenStyle(currentNode);
+            resetChildrenStyle(currentNode, newStyle);
         }
         else {
             prevNode = currentNode;

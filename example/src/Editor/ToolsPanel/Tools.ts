@@ -16,6 +16,7 @@ export class Tools {
 
         this.boldButton = new Button(bold, {'font-weight': 'bold'}, {'font-weight': 'normal'}, this.styleChanged);
         this.italicButton = new Button(italic, {'font-style': 'italic'}, {'font-style': 'normal'}, this.styleChanged);
+        // To overvrite underline you can add display: inline-block, but it will introduce ugly bug for multiline mode - don't do that :).        
         this.underlineButton = new Button(underline, {'text-decoration': 'underline'}, {'text-decoration': 'none'}, this.styleChanged);
         toolsDivNd?.appendChild(this.boldButton.btEl);
         toolsDivNd?.appendChild(this.italicButton.btEl);

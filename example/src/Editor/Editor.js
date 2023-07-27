@@ -38,13 +38,32 @@ class Editor {
     selectionChanged(ev) {
         console.log('mouseup handler');
         const selAdj = this.getAdjSelection(false);
+        console.log(selAdj, selAdj?.startOffset, selAdj?.endOffset);
         if (selAdj) {
             const style = (0, Styling_1.getNestedStyle)(selAdj);
             console.log(style);
             this.tools.silentUpdate(style);
+            /*
             if (selAdj.isEmpty) {
-                (0, SelectionAdj_1.restoreSelection)(selAdj.startNode, selAdj.startOffset, selAdj.endOffset);
+                const insertedNode = this.insertEmptySpan(selAdj.startNode, selAdj.startOffset);
+                const sel = window.getSelection();
+                
+                const selRange = document.createRange();
+                const next = insertedNode.nextSibling ? insertedNode.nextSibling : insertedNode;
+                selRange.setStart(next, 1);
+                selRange.setEnd(next, 1);
+                //selRange.selectNodeContents(insertedNode);
+                //selRange.collapse(true);
+                sel?.removeAllRanges();
+                sel?.addRange(selRange);
+                document.getElementById("txt-root")?.focus();
+                
+                console.log(sel)
+                
+                
+                 
             }
+            */
         }
     }
     createRootTextElement() {
@@ -52,6 +71,8 @@ class Editor {
         firstTextEl.contentEditable = "true";
         firstTextEl.id = "txt-root";
         firstTextEl.innerText = "template";
+        firstTextEl.style["display"] = "inline-block";
+        firstTextEl.style["padding"] = "10px";
         firstTextEl.classList.add("text-box");
         return firstTextEl;
     }
@@ -86,13 +107,14 @@ class Editor {
         }
         const selIsOneNode = sel.anchorNode.isSameNode(sel.focusNode);
         let commonNode = sel.anchorNode.parentNode ? sel.anchorNode.parentNode : sel.anchorNode;
-        let reverseSelection = sel.anchorOffset < sel.focusOffset || selIsOneNode ? false : true;
+        let reverseSelection = sel.anchorOffset < sel.focusOffset || !selIsOneNode ? false : true;
         if (!selIsOneNode) {
             let anchorHierarchy = (0, DOMTools_1.getNodeHierarchy)(sel.anchorNode, rootNode);
             let focusHierarchy = (0, DOMTools_1.getNodeHierarchy)(sel.focusNode, rootNode);
             commonNode = (0, DOMTools_1.getCommonNode)(anchorHierarchy, focusHierarchy);
             reverseSelection = this.isReverseSelection(anchorHierarchy, focusHierarchy, commonNode);
         }
+        console.log("reverse:", reverseSelection, "one node:", selIsOneNode);
         let selAdj = {
             startNode: reverseSelection ? sel.focusNode : sel.anchorNode,
             startOffset: reverseSelection ? sel.focusOffset : sel.anchorOffset,
@@ -153,54 +175,124 @@ class Editor {
     }
     setStyleFromObj(newStyle) {
         let selAdj = this.getAdjSelection(true);
-        if (selAdj && !selAdj.isEmpty) {
-            (0, Styling_1.setStyle)(selAdj, newStyle);
+        if (selAdj) {
+            if (!selAdj.isEmpty) {
+                (0, Styling_1.setStyle)(selAdj, newStyle);
+            }
+            else {
+                let cursorNd = selAdj.startNode;
+                if (cursorNd.textContent != undefined && cursorNd.textContent !== "\u200b") {
+                    cursorNd = this.insertEmptySpan(selAdj.startNode, selAdj.startOffset);
+                    console.log("cursor nd", cursorNd.textContent?.charCodeAt(0), cursorNd.textContent === "\u200b");
+                }
+                const sel = window.getSelection();
+                console.log("setting style for empty span");
+                (0, Styling_1.updateNodeStyle)(cursorNd, newStyle);
+                if (!sel) {
+                    return;
+                }
+                sel.collapse(cursorNd, 1);
+            }
         }
     }
     splitStart(nd, offset) {
+        if (nd.nodeType !== Node.TEXT_NODE) {
+            console.error("splitStart accepts only text nodes, not ", nd.nodeType);
+            return nd;
+        }
         if (!nd.textContent || offset === 0) {
             return nd;
         }
         const textContent = nd.textContent;
         //1. clone anchor node
-        let ndClone = document.createElement("span");
+        let ndInsert = document.createElement("span");
+        const ndText = document.createTextNode("");
+        ndInsert.appendChild(ndText);
         //2. remove first part from original
         nd.textContent = textContent ? textContent.substring(0, offset) : null;
         //3. remove second part from copy
-        ndClone.textContent = textContent ? textContent.substring(offset) : null;
+        ndInsert.textContent = textContent ? textContent.substring(offset) : null;
         //4. insert copy before original
         if (nd.parentNode) {
             if (nd.nextSibling) {
-                ndClone = nd.parentNode.insertBefore(ndClone, nd.nextSibling);
+                ndInsert = nd.parentNode.insertBefore(ndInsert, nd.nextSibling);
             }
             else {
-                ndClone = nd.parentNode.appendChild(ndClone);
+                ndInsert = nd.parentNode.appendChild(ndInsert);
             }
         }
         else {
             console.log("wrong start element");
         }
-        return ndClone.childNodes[0];
+        return ndInsert.childNodes[0];
     }
     splitEnd(nd, offset) {
+        if (nd.nodeType !== Node.TEXT_NODE) {
+            console.error("splitEnd accepts only text nodes, not ", nd.nodeType);
+            return nd;
+        }
         if (!nd.textContent || offset === nd.textContent.length) {
             return nd;
         }
+        console.log(nd.textContent);
         const textContent = nd.textContent;
         //1. clone anchor node
-        let ndClone = document.createElement("span");
+        let ndInsert = document.createElement("span");
+        const ndText = document.createTextNode("");
+        ndInsert.appendChild(ndText);
         //2. remove first part from original
         nd.textContent = textContent.substring(offset);
         //3. remove second part from copy
-        ndClone.textContent = textContent.substring(0, offset);
+        ndInsert.textContent = textContent.substring(0, offset);
         //4. insert copy before original
         if (nd.parentNode) {
-            ndClone = nd.parentNode.insertBefore(ndClone, nd);
+            ndInsert = nd.parentNode.insertBefore(ndInsert, nd);
         }
         else {
             console.log("wrong end element");
         }
-        return ndClone.childNodes[0];
+        console.log(ndInsert.textContent, nd.textContent); //fix undefined return
+        return ndInsert.childNodes[0];
+    }
+    // Split node and insert span
+    insertEmptySpan(nd, offset) {
+        if (nd.nodeType !== Node.TEXT_NODE) {
+            console.error("insertEmptySpan accepts only text nodes, not ", nd.nodeType);
+            return nd;
+        }
+        // if it's already empty node - no need to insert another one.
+        if (!nd.textContent && !nd.previousSibling && !nd.nextSibling) {
+            return nd;
+        }
+        if (!nd.parentNode) {
+            return nd;
+        }
+        const ndInsert = document.createElement("span");
+        const ndText = document.createTextNode("\u200b");
+        ndInsert.appendChild(ndText);
+        if (offset === 0) {
+            nd.parentNode.insertBefore(ndInsert, nd);
+            return ndText;
+        }
+        // Append empty node at the end
+        if (nd.nextSibling) {
+            nd.parentNode.insertBefore(ndInsert, nd.nextSibling);
+        }
+        else {
+            nd.parentNode.appendChild(ndInsert);
+        }
+        if (nd.textContent && offset < nd.textContent.length) {
+            const textContent = nd.textContent;
+            nd.textContent = textContent.substring(0, offset);
+            const textEnd = document.createTextNode(textContent.substring(offset));
+            if (ndInsert.nextSibling) {
+                nd.parentNode.insertBefore(textEnd, ndInsert.nextSibling);
+            }
+            else {
+                nd.parentNode.appendChild(textEnd);
+            }
+        }
+        return ndText;
     }
     getIndex(nd, startOffset, rootNode) {
         if (!nd?.parentElement) {

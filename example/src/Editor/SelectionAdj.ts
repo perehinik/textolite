@@ -18,6 +18,8 @@ export function restoreSelection(nd: Node, startIndex: number, endIndex: number)
     const startNd = getChildNodeByIndex(nd, startIndex);
     const endNd = getChildNodeByIndex(nd, endIndex);
 
+    console.log("=>", startNd.node, startNd.offset, endNd.node, endNd.offset)
+
     const selRange = document.createRange();
     selRange.setStart(startNd.node, startNd.offset);
     selRange.setEnd(endNd.node, endNd.offset);

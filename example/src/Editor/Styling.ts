@@ -158,17 +158,24 @@ export function setStyle(sel: SelectionAdj, style: CSSObj): void {
     // If start and end nendNodeode are the same - selection in one node.
     if (sel.startNode.isSameNode(sel.endNode)) {
         updateNodeStyle(sel.startNode, style);
+        restoreSelection(
+            sel.startNode, 
+            sel.startOffset, 
+            sel.endOffset
+        );
         return;
-    }
+    } 
     const rootAnchor = setStyleFromStart(sel, style); 
     const rootFocus = setStyleFromEnd(sel, style);
     let node = rootAnchor?.nextSibling
     while(node && !node.isSameNode(rootFocus)) {
+        console.log("middle:", node.textContent)
         updateNodeStyle(node, style);
-        resetChildrenStyle(node);
+        resetChildrenStyle(node, style);
         node = node.nextSibling;
     }
 
+    
     // Optimize DOM structure after style update
     const nodeReplacement = rootP ? optimyzeNode(rootP) : null;
     if (rootP && nodeReplacement) {
@@ -181,9 +188,10 @@ export function setStyle(sel: SelectionAdj, style: CSSObj): void {
         sel.startIndex ? sel.startIndex : 0, 
         sel.endIndex ? sel.endIndex : 0
     );
+    
 }
 
-function updateNodeStyle(nd: Node, newStyle: CSSObj) : Node {
+export function updateNodeStyle(nd: Node, newStyle: CSSObj) : Node {
     const el = nd as HTMLElement;
     // If node has style property then style can be changed directly
     if (el.style) {
@@ -207,11 +215,15 @@ function updateNodeStyle(nd: Node, newStyle: CSSObj) : Node {
     return nd;
 }
 
-function resetChildrenStyle(nd: Node) : void{
+function resetChildrenStyle(nd: Node, newStyle: CSSObj) : void{
     nd.childNodes.forEach(ndChild => {
         const el = ndChild as HTMLElement;
-        if (el.style) { el.style.fontWeight = "";}
-        resetChildrenStyle(ndChild);
+        if (el.style) { 
+            for(let key in newStyle) {
+                el.style.setProperty(key, "");
+            }
+        }
+        resetChildrenStyle(ndChild, newStyle);
     })
 }
 
@@ -228,7 +240,7 @@ function setStyleFromStart(sel: SelectionAdj, newStyle: CSSObj): Node | undefine
             if (currentNode?.parentNode?.isSameNode(sel.commonNode)) {return currentNode;}
             currentNode = currentNode.nextSibling as Node;
             currentNode = updateNodeStyle(currentNode, newStyle);
-            resetChildrenStyle(currentNode);
+            resetChildrenStyle(currentNode, newStyle);
         }
         else {
             prevNode = currentNode;
@@ -252,7 +264,7 @@ function setStyleFromEnd(sel: SelectionAdj, newStyle: CSSObj): Node {
             if (currentNode?.parentNode?.isSameNode(sel.commonNode)) {return currentNode;}
             currentNode = currentNode.previousSibling as Node;
             currentNode = updateNodeStyle(currentNode, newStyle);
-            resetChildrenStyle(currentNode);
+            resetChildrenStyle(currentNode, newStyle);
         }
         else {
             prevNode = currentNode;

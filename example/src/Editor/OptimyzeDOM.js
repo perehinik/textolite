@@ -30,6 +30,10 @@ function optimyzeNode(nd, parentStyle) {
     const ndStyle = (0, Styling_1.getStyle)(nd);
     for (let childId = 0; childId < nd.childNodes.length; childId++) {
         const childNd = nd.childNodes[childId]; // as HTMLElement;
+        if (childNd.nodeName === "BR") {
+            segmentText += "<br/>";
+            continue;
+        }
         if (!childNd.textContent) {
             continue;
         }
@@ -47,7 +51,14 @@ function optimyzeNode(nd, parentStyle) {
         // Node contains more than 1 child so can't be optimized
         if (chNdReplace?.childNodes?.length && chNdReplace.childNodes.length > 1) {
             addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
-            optimizationRezult.appendChild(chNdReplace);
+            if (sameChilderStyle(chNdReplace) && (0, Styling_1.compareNodeStyles)(segmentStyle, chNdReplaceStyle)) {
+                for (let i = 0; i < chNdReplace.childNodes.length; i++) {
+                    optimizationRezult.appendChild(chNdReplace.childNodes[i]);
+                }
+            }
+            else {
+                optimizationRezult.appendChild(chNdReplace);
+            }
             segmentText = "";
             segmentType = "TEXT";
             segmentStyle = {};
@@ -71,7 +82,7 @@ function optimyzeNode(nd, parentStyle) {
             return document.createTextNode(segmentText);
         }
         else {
-            optimizationRezult.textContent = segmentText;
+            optimizationRezult.innerHTML = segmentText;
             for (let styleName in segmentStyle) {
                 optimizationRezult.style.setProperty(styleName, segmentStyle[styleName]);
             }
@@ -84,6 +95,14 @@ function optimyzeNode(nd, parentStyle) {
     return optimizationRezult;
 }
 exports.optimyzeNode = optimyzeNode;
+function sameChilderStyle(nd) {
+    for (let childId = 0; childId < nd.childNodes.length; childId++) {
+        if (nd.childNodes[childId].nodeType !== Node.TEXT_NODE && nd.childNodes[childId].nodeName != "BR") {
+            return false;
+        }
+    }
+    return true;
+}
 function addChild(pNd, chNdType, textContent, style) {
     if (!textContent) {
         return;
@@ -91,11 +110,11 @@ function addChild(pNd, chNdType, textContent, style) {
     chNdType = chNdType ? chNdType : "TEXT";
     style = style ? style : {};
     if (chNdType === "TEXT") {
-        pNd.appendChild(document.createTextNode(textContent));
+        pNd.innerHTML += textContent; //appendChild(document.createTextNode(textContent));
     }
     else {
         const ndNew = document.createElement(chNdType);
-        ndNew.textContent = textContent;
+        ndNew.innerHTML = textContent;
         for (let styleName in style) {
             ndNew.style.setProperty(styleName, style[styleName]);
         }
