@@ -1,6 +1,6 @@
 import { SelectionAdj } from "./SelectionAdj";
 import { optimyzeNode } from './OptimyzeDOM';
-import { restoreSelection } from "./SelectionAdj";
+import { restoreSelection, fixSelectionEnd } from "./SelectionAdj";
 import { getNodeHierarchy, getCommonNode } from "./DOMTools";
 
 export type CSSObj = { [name: string]: string };
@@ -154,7 +154,8 @@ function* rangeStartIter(sel: SelectionAdj): IterableIterator<Node> {
 
 export function setStyle(sel: SelectionAdj, style: CSSObj): void {
     let rootP = document.getElementById("txt-root");
-
+    console.log("setstyle selection", sel)
+    
     // If start and end nendNodeode are the same - selection in one node.
     if (sel.startNode.isSameNode(sel.endNode)) {
         updateNodeStyle(sel.startNode, style);
@@ -165,33 +166,36 @@ export function setStyle(sel: SelectionAdj, style: CSSObj): void {
         );
         return;
     } 
+    
     const rootAnchor = setStyleFromStart(sel, style); 
     const rootFocus = setStyleFromEnd(sel, style);
-    let node = rootAnchor?.nextSibling
+    console.log("ra:",rootAnchor?.textContent, "rf:",rootFocus?.textContent);
+    let node: Node = rootAnchor?.nextSibling as Node
     while(node && !node.isSameNode(rootFocus)) {
         console.log("middle:", node.textContent)
-        updateNodeStyle(node, style);
+        node = updateNodeStyle(node, style);
         resetChildrenStyle(node, style);
-        node = node.nextSibling;
+        node = node.nextSibling as Node;
     }
 
-    
     // Optimize DOM structure after style update
-    const nodeReplacement = rootP ? optimyzeNode(rootP) : null;
-    if (rootP && nodeReplacement) {
-        rootP.parentNode?.replaceChild(nodeReplacement, rootP)
+
+    //ToDo IP: this can be upgraded to optimyze only modified nodes, not the whoile editor tree.
+    const nodeReplacement = rootP ? optimyzeNode(rootP, defaultStyle) : null;
+    if (rootP && rootP.parentNode && nodeReplacement) {
+        rootP.parentNode.replaceChild(nodeReplacement, rootP) 
     }
-    
+
     // Because DOM structure may have been changed we need to update selection range
     restoreSelection(
         nodeReplacement as Node, 
         sel.startIndex ? sel.startIndex : 0, 
         sel.endIndex ? sel.endIndex : 0
     );
-    
 }
 
 export function updateNodeStyle(nd: Node, newStyle: CSSObj) : Node {
+    if (nd.nodeName == "BR") {return nd;}
     const el = nd as HTMLElement;
     // If node has style property then style can be changed directly
     if (el.style) {
@@ -205,7 +209,7 @@ export function updateNodeStyle(nd: Node, newStyle: CSSObj) : Node {
         updateNodeStyle(nd.parentNode, newStyle);
     // Case when target node is the text node but it's NOT the only node in parent node.
     // So text node should be replaces with span in order to set style of this part of text.
-    } else {
+    } else if (nd.nodeType === Node.TEXT_NODE){
         const ndSpan = document.createElement("span");
         ndSpan.textContent = nd.textContent;
         updateNodeStyle(ndSpan, newStyle)
@@ -276,6 +280,7 @@ function setStyleFromEnd(sel: SelectionAdj, newStyle: CSSObj): Node {
 }   
 
 export function applyOverlappingStyle(parentStyle?: CSSObj, childStyle?: CSSObj): CSSObj {
+    if (!parentStyle) {return {...childStyle} as CSSObj};
     const chNdStyle: CSSObj = {...parentStyle};
     if (childStyle) {
         for (let styleName in childStyle) {

@@ -196,6 +196,7 @@ export class Editor {
         let selAdj = this.getAdjSelection(true);
         if (selAdj) {
             if (!selAdj.isEmpty) {
+                console.log("selection is not empty")
                 setStyle(selAdj, newStyle); 
             }
             else {

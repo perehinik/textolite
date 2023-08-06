@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Editor = void 0;
+// Add tab handling
 const Tools_1 = require("./ToolsPanel/Tools");
 const SelectionAdj_1 = require("./SelectionAdj");
 const Styling_1 = require("./Styling");
@@ -177,6 +178,7 @@ class Editor {
         let selAdj = this.getAdjSelection(true);
         if (selAdj) {
             if (!selAdj.isEmpty) {
+                console.log("selection is not empty");
                 (0, Styling_1.setStyle)(selAdj, newStyle);
             }
             else {

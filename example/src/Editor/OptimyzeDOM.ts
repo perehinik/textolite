@@ -1,9 +1,10 @@
+import { updateNodeStyle } from './Styling';
 import { CSSObj, getStyle, applyOverlappingStyle, compareChildStyle, compareNodeStyles } from './Styling'
 
 /*
 DOM optimization by style.
 
-Removes child nodes with same stayle as parent's.
+Removes child nodes with same style as parent's.
 1. Compare style for all childen nodes with parent node's style. Start from left to right.
 2. If there are more then one child node with same style as node - concatenate them into text node.
 3. If parent node contains only 1 node with style(not text) - move applied styles and text 
@@ -13,81 +14,127 @@ Removes child nodes with same stayle as parent's.
 Same logic shoul be applied from deapest node to target node(depth first.)
 */
 
-// returns replacement node for provided node or nothing.
+
+
+// vertical optimization
 export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
-    // if it's a leaf
-    if (nd.nodeType === Node.TEXT_NODE) {return nd;}
+    if (nd.nodeType === Node.TEXT_NODE) {return nd.cloneNode();}
+    if (nd.nodeName === "BR") {return nd.cloneNode();}
     if (nd.childNodes.length === 0) {return;}
-    let optimizationRezult: Node | undefined = nd.cloneNode();
-    let segmentText: string = "";
-    let segmentType: string = "TEXT";
-    let segmentStyle: CSSObj = {};
 
     const ndStyle = getStyle(nd as HTMLElement);
+    const ndStyleAbs = applyOverlappingStyle(parentStyle, ndStyle);
+
+    let res: Node[] = [];
 
     for (let childId = 0; childId < nd.childNodes.length; childId++) {
-        const childNd = nd.childNodes[childId];// as HTMLElement;
-        if (childNd.nodeName === "BR") {segmentText += "<br/>"; continue; }
-        if (!childNd.textContent) {continue;}
+        const childNd = nd.childNodes[childId];
 
         // This can return text node(concatenated) if style of childNd and all it's children
         // is the same as childNd.parentNode
         // Otherwise it should return nothing or modified copy of childNd.
-        const chNdReplace = optimyzeNode(childNd, applyOverlappingStyle(parentStyle, ndStyle));
+        const chNdReplace = optimyzeNode(childNd, ndStyleAbs);
+        if (!chNdReplace) {continue;}
         const chNdReplaceStyle = getStyle(chNdReplace as HTMLElement);
         const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
 
-        //console.log(nodeType, childNd.textContent, chNdReplaceStyle, segmentType, segmentStyle)
-
-        // This should be removed in order to implement other node types.
-        if (nodeType !== "TEXT" && nodeType !== "SPAN" && nodeType !== "P") {continue;}
-        
-        // Node contains more than 1 child so can't be optimized
-        if (chNdReplace?.childNodes?.length && chNdReplace.childNodes.length > 1) {
-            addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
-            if (sameChilderStyle(chNdReplace) && compareNodeStyles(segmentStyle, chNdReplaceStyle)) {
-                for (let i = 0; i < chNdReplace.childNodes.length; i++) {
-                    optimizationRezult.appendChild(chNdReplace.childNodes[i]);
-                }
-            } else {
-                optimizationRezult.appendChild(chNdReplace);
-            }
-            segmentText = "";
-            segmentType = "TEXT";
-            segmentStyle = {};
-        }
-        // Node has same style as previous sibling so can be merged with it.
-        else if (nodeType === segmentType && compareNodeStyles(segmentStyle, chNdReplaceStyle)) {
-            segmentText += childNd.textContent;
+        if (chNdReplace.nodeName === "BR" || chNdReplace.nodeType === Node.TEXT_NODE) {
+            res.push(chNdReplace);
             continue;
-        // Node is different from previous sibling so new segment should be started.
+        }
+        // This should be removed in order to implement other node types.
+        if (nodeType !== "SPAN" && nodeType !== "P") {continue;}
+
+        // Style is the same so we can extract all nodes from inside.
+        if (compareChildStyle(ndStyleAbs, chNdReplaceStyle)) {
+            for (let i = 0; i < chNdReplace.childNodes.length; i++) {
+                res.push(chNdReplace.childNodes[i]);
+            }
+        // Style is different so just push the whole node.
         } else {
-            addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
-            segmentText = childNd.textContent;
-            segmentType = nodeType ? nodeType : "";
-            segmentStyle = chNdReplaceStyle;
-        }  
+            res.push(chNdReplace);
+        }
     }
-    // No nested SPANs, just text
-    if (!optimizationRezult.childNodes.length) {
-        if (nd.parentNode && compareChildStyle(parentStyle, ndStyle) || segmentText === "") {
-            return document.createTextNode(segmentText);
-        } else {
-            (optimizationRezult as HTMLElement).innerHTML = segmentText;
-            for (let styleName in segmentStyle) {
-                (optimizationRezult as HTMLElement).style.setProperty(styleName, segmentStyle[styleName]);
+
+    // Optimyze node list horizontally
+    res = optimizeNodeList(res);
+
+    if (res.length === 0) {return;}
+    else if (res.length === 1) {
+        if (res[0].nodeName === "BR") {return res[0];}
+
+        const resStyle = getStyle(res[0] as HTMLElement);
+        const resNd = nd.cloneNode() as HTMLElement;
+
+        if (res[0].nodeName === "SPAN") {
+            while (res[0].childNodes.length > 0) {
+                resNd.appendChild(res[0].childNodes[0]);
+            }
+        } else {   
+            resNd.appendChild(res[0]);
+        }
+
+        if (resNd.style != undefined) {
+            for(let key in resStyle) {
+                resNd.style.setProperty(key, resStyle[key]);
             }
         }
-    // There are nested SPANs and some text at the end.
-    } else {
-        addChild(optimizationRezult, segmentType, segmentText, segmentStyle);
+        return resNd;        
     }
-    return optimizationRezult;
+
+    const resNd = nd.cloneNode() as HTMLElement;
+    for (let i = 0; i < res.length; i++) {
+        resNd.appendChild(res[i]);
+    }
+    return resNd;  
 }
 
-function sameChilderStyle(nd: Node): boolean {
+
+export function optimizeNodeList(ndList: Node[]): Node[] {
+    const res: Node[] = [];
+
+    for (let i = 0; i < ndList.length; i++) {
+        if (!ndList[i]?.nodeName) {continue;};
+        if (i === 0) {
+            res.push(ndList[i]);
+            continue;
+        }
+
+        const lastAddedNode = res[res.length - 1];
+
+        if (ndList[i]?.nodeName === "BR" && lastAddedNode?.nodeName === "SPAN") {
+            lastAddedNode.appendChild(ndList[i]);
+            continue;
+        }
+        if (lastAddedNode?.nodeType === Node.TEXT_NODE && ndList[i]?.nodeType === Node.TEXT_NODE) {
+            if (lastAddedNode?.textContent != null && ndList[i].textContent != null) {
+                lastAddedNode.textContent += ndList[i].textContent;
+            }
+            continue;
+        }
+        if (lastAddedNode?.nodeName !== ndList[i]?.nodeName) {
+            res.push(ndList[i]);
+            continue;
+        }
+
+        const ndStyle1 = getStyle(lastAddedNode as HTMLElement);
+        const ndStyle2 = getStyle(ndList[i] as HTMLElement);
+        if (compareNodeStyles(ndStyle1, ndStyle2) && ndList[i]?.childNodes?.length) {
+            while (ndList[i]?.childNodes?.length) {
+                const chNd = ndList[i].childNodes[0];
+                lastAddedNode.appendChild(chNd);
+            }
+            
+            continue;
+        }
+        res.push(ndList[i]);
+    }
+    return res;
+}
+
+function sameChildrenStyle(nd: Node): boolean {
     for (let childId = 0; childId < nd.childNodes.length; childId++) {
-        if (nd.childNodes[childId].nodeType !== Node.TEXT_NODE && nd.childNodes[childId].nodeName != "BR") {
+        if (nd.childNodes[childId].nodeType !== Node.TEXT_NODE && nd.childNodes[childId].nodeName !== "BR") {
             return false;
         }
     }
@@ -95,6 +142,7 @@ function sameChilderStyle(nd: Node): boolean {
 }
 
 function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CSSObj): void {
+    console.log("add content", chNdType, textContent);
     if (!textContent) { return; }
     chNdType = chNdType ? chNdType : "TEXT";
     style = style ? style : {};

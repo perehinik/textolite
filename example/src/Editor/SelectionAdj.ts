@@ -17,6 +17,16 @@ export function restoreSelection(nd: Node, startIndex: number, endIndex: number)
     let sel = window.getSelection();
     const startNd = getChildNodeByIndex(nd, startIndex);
     const endNd = getChildNodeByIndex(nd, endIndex);
+    if (endNd.offset === 0) {
+        const prevSibl = getPreviousSiblingWithText(endNd.node);
+        if (prevSibl) {
+            const txtNode = getRightMostTextNode(prevSibl);
+            if (txtNode?.textContent) {
+                endNd.node = txtNode;
+                endNd.offset = txtNode.textContent.length
+            }
+        }
+    }
 
     console.log("=>", startNd.node, startNd.offset, endNd.node, endNd.offset)
 

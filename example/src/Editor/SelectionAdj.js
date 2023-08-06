@@ -6,6 +6,16 @@ function restoreSelection(nd, startIndex, endIndex) {
     let sel = window.getSelection();
     const startNd = (0, DOMTools_1.getChildNodeByIndex)(nd, startIndex);
     const endNd = (0, DOMTools_1.getChildNodeByIndex)(nd, endIndex);
+    if (endNd.offset === 0) {
+        const prevSibl = getPreviousSiblingWithText(endNd.node);
+        if (prevSibl) {
+            const txtNode = getRightMostTextNode(prevSibl);
+            if (txtNode?.textContent) {
+                endNd.node = txtNode;
+                endNd.offset = txtNode.textContent.length;
+            }
+        }
+    }
     console.log("=>", startNd.node, startNd.offset, endNd.node, endNd.offset);
     const selRange = document.createRange();
     selRange.setStart(startNd.node, startNd.offset);

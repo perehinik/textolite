@@ -154,6 +154,7 @@ function* rangeStartIter(sel) {
 }
 function setStyle(sel, style) {
     let rootP = document.getElementById("txt-root");
+    console.log("setstyle selection", sel);
     // If start and end nendNodeode are the same - selection in one node.
     if (sel.startNode.isSameNode(sel.endNode)) {
         updateNodeStyle(sel.startNode, style);
@@ -162,23 +163,28 @@ function setStyle(sel, style) {
     }
     const rootAnchor = setStyleFromStart(sel, style);
     const rootFocus = setStyleFromEnd(sel, style);
+    console.log("ra:", rootAnchor?.textContent, "rf:", rootFocus?.textContent);
     let node = rootAnchor?.nextSibling;
     while (node && !node.isSameNode(rootFocus)) {
         console.log("middle:", node.textContent);
-        updateNodeStyle(node, style);
+        node = updateNodeStyle(node, style);
         resetChildrenStyle(node, style);
         node = node.nextSibling;
     }
     // Optimize DOM structure after style update
-    const nodeReplacement = rootP ? (0, OptimyzeDOM_1.optimyzeNode)(rootP) : null;
-    if (rootP && nodeReplacement) {
-        rootP.parentNode?.replaceChild(nodeReplacement, rootP);
+    //ToDo IP: this can be upgraded to optimyze only modified nodes, not the whoile editor tree.
+    const nodeReplacement = rootP ? (0, OptimyzeDOM_1.optimyzeNode)(rootP, exports.defaultStyle) : null;
+    if (rootP && rootP.parentNode && nodeReplacement) {
+        rootP.parentNode.replaceChild(nodeReplacement, rootP);
     }
     // Because DOM structure may have been changed we need to update selection range
     (0, SelectionAdj_1.restoreSelection)(nodeReplacement, sel.startIndex ? sel.startIndex : 0, sel.endIndex ? sel.endIndex : 0);
 }
 exports.setStyle = setStyle;
 function updateNodeStyle(nd, newStyle) {
+    if (nd.nodeName == "BR") {
+        return nd;
+    }
     const el = nd;
     // If node has style property then style can be changed directly
     if (el.style) {
@@ -193,7 +199,7 @@ function updateNodeStyle(nd, newStyle) {
         // Case when target node is the text node but it's NOT the only node in parent node.
         // So text node should be replaces with span in order to set style of this part of text.
     }
-    else {
+    else if (nd.nodeType === Node.TEXT_NODE) {
         const ndSpan = document.createElement("span");
         ndSpan.textContent = nd.textContent;
         updateNodeStyle(ndSpan, newStyle);
@@ -263,6 +269,10 @@ function setStyleFromEnd(sel, newStyle) {
     return prevNode;
 }
 function applyOverlappingStyle(parentStyle, childStyle) {
+    if (!parentStyle) {
+        return { ...childStyle };
+    }
+    ;
     const chNdStyle = { ...parentStyle };
     if (childStyle) {
         for (let styleName in childStyle) {
