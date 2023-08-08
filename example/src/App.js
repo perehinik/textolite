@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Editor } from './Editor/Editor';
+import { Editor } from 'textolite';
 
 function App() {
   let editor = null;

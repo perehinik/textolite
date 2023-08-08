@@ -1,0 +1,8 @@
+{
+  "name": "textolite",
+  "version": "0.0.1",
+  "author": "Ivan Perehiniak <iv.perehinik@gmail.com>",
+  "devDependencies": {
+    "typescript": "^5.1.6"
+  }
+}
