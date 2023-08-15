@@ -1,19 +1,4 @@
-import { updateNodeStyle } from './Styling';
 import { CSSObj, getStyle, applyOverlappingStyle, compareChildStyle, compareNodeStyles } from './Styling'
-
-/*
-DOM optimization by style.
-
-Removes child nodes with same style as parent's.
-1. Compare style for all childen nodes with parent node's style. Start from left to right.
-2. If there are more then one child node with same style as node - concatenate them into text node.
-3. If parent node contains only 1 node with style(not text) - move applied styles and text 
-    from child to parent, remove child.
-4. If all child nodes have same style as parent -> 
-
-Same logic shoul be applied from deapest node to target node(depth first.)
-*/
-
 
 
 // vertical optimization
@@ -62,6 +47,7 @@ export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     if (res.length === 0) {return;}
     else if (res.length === 1) {
         if (res[0].nodeName === "BR") {return res[0];}
+        if (res[0].nodeType === Node.TEXT_NODE && Object.keys(ndStyle).length === 0) {return res[0];}
 
         const resStyle = getStyle(res[0] as HTMLElement);
         const resNd = nd.cloneNode() as HTMLElement;
@@ -132,29 +118,6 @@ export function optimizeNodeList(ndList: Node[]): Node[] {
     return res;
 }
 
-function sameChildrenStyle(nd: Node): boolean {
-    for (let childId = 0; childId < nd.childNodes.length; childId++) {
-        if (nd.childNodes[childId].nodeType !== Node.TEXT_NODE && nd.childNodes[childId].nodeName !== "BR") {
-            return false;
-        }
-    }
-    return true;
-}
-
-function addChild(pNd: Node, chNdType?: string, textContent?: string, style?: CSSObj): void {
-    console.log("add content", chNdType, textContent);
-    if (!textContent) { return; }
-    chNdType = chNdType ? chNdType : "TEXT";
-    style = style ? style : {};
-
-    if (chNdType === "TEXT") {
-        (pNd as HTMLElement).innerHTML += textContent; //appendChild(document.createTextNode(textContent));
-    } else {
-        const ndNew = document.createElement(chNdType);
-        ndNew.innerHTML = textContent;
-        for (let styleName in style) {
-            ndNew.style.setProperty(styleName, style[styleName]);
-        }
-        pNd.appendChild(ndNew);
-    }
+export const onlyForTesting = {
+    optimizeNodeList
 }
