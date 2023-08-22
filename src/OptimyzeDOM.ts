@@ -2,7 +2,7 @@ import { CSSObj, getStyle, applyOverlappingStyle, compareChildStyle, compareNode
 
 
 // vertical optimization
-export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
+export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     if (nd.nodeType === Node.TEXT_NODE) {return nd.cloneNode();}
     if (nd.nodeName === "BR") {return nd.cloneNode();}
     if (nd.childNodes.length === 0) {return;}
@@ -18,17 +18,17 @@ export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         // This can return text node(concatenated) if style of childNd and all it's children
         // is the same as childNd.parentNode
         // Otherwise it should return nothing or modified copy of childNd.
-        const chNdReplace = optimyzeNode(childNd, ndStyleAbs);
+        const chNdReplace = optimizeNode(childNd, ndStyleAbs);
         if (!chNdReplace) {continue;}
         const chNdReplaceStyle = getStyle(chNdReplace as HTMLElement);
         const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
 
-        if (chNdReplace.nodeName === "BR" || chNdReplace.nodeType === Node.TEXT_NODE) {
+        if (chNdReplace.nodeName === "BR" || chNdReplace.nodeType === Node.TEXT_NODE || chNdReplace.nodeName === "P" ) {
             res.push(chNdReplace);
             continue;
         }
         // This should be removed in order to implement other node types.
-        if (nodeType !== "SPAN" && nodeType !== "P") {continue;}
+        if (nodeType !== "SPAN") {continue;}
 
         // Style is the same so we can extract all nodes from inside.
         if (compareChildStyle(ndStyleAbs, chNdReplaceStyle)) {
@@ -44,8 +44,8 @@ export function optimyzeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     // Optimyze node list horizontally
     res = optimizeNodeList(res);
 
-    if (res.length === 0) {return;}
-    else if (res.length === 1) {
+    if (res.length === 0 && nd.nodeName !== "DIV" && nd.nodeName !== "P") {return;}
+    else if (res.length === 1 && nd.nodeName !== "DIV" && nd.nodeName !== "P") {
         if (res[0].nodeName === "BR") {return res[0];}
         if (res[0].nodeType === Node.TEXT_NODE && Object.keys(ndStyle).length === 0) {return res[0];}
 
@@ -98,7 +98,7 @@ export function optimizeNodeList(ndList: Node[]): Node[] {
             }
             continue;
         }
-        if (lastAddedNode?.nodeName !== ndList[i]?.nodeName) {
+        if (lastAddedNode?.nodeName !== ndList[i]?.nodeName || ndList[i]?.nodeName === "P") {
             res.push(ndList[i]);
             continue;
         }
@@ -110,7 +110,6 @@ export function optimizeNodeList(ndList: Node[]): Node[] {
                 const chNd = ndList[i].childNodes[0];
                 lastAddedNode.appendChild(chNd);
             }
-            
             continue;
         }
         res.push(ndList[i]);

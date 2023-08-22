@@ -10,8 +10,6 @@ function App() {
   return (    
     <>
       <div id={"editor-container"}></div>
-      <br/>
-      <p>JUST SOME TEXT</p>
     </>
   );
 }

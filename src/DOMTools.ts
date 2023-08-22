@@ -3,7 +3,9 @@ export type Position = {
     offset: number
 };
 
+
 export function getChildNodeByIndex(nd: Node, index: number): Position {
+    let res: Position = {node: nd, offset: index};
     if (nd.childNodes?.length) {
         for (let i=0; i < nd.childNodes.length; i++) {
             const chNd = nd.childNodes[i];
@@ -11,16 +13,19 @@ export function getChildNodeByIndex(nd: Node, index: number): Position {
             if (!txtLength) { continue; }
             // Second condition is to eliminate situation when start position
             // is at the end of the node. In this case selection should start at the next node. 
-            if (index < txtLength || (i+1 === nd.childNodes.length && index === txtLength)) { 
-                return getChildNodeByIndex(chNd, index);
+            if (res.offset < txtLength || (i+1 === nd.childNodes.length && res.offset === txtLength)) { 
+                return getChildNodeByIndex(chNd, res.offset);
             }
-            index -= txtLength;
+            res.offset -= txtLength;
         }
+        const lastNode = nd.childNodes[nd.childNodes.length - 1];
+        res = {node: lastNode, offset: lastNode.textContent ? lastNode.textContent.length : 0}
     }
-    return {node: nd, offset: index} as Position;
+    return res;
 }
 
-// Returns node chain from specified node to root node. 
+
+// Returns node chain from root node to specified node. 
 export function getNodeHierarchy(nd: Node, rootNode: Node): Node[] {
     let nodeHierarchy: Node[] = [nd] 
     while(nd.parentNode && !nd.isSameNode(rootNode)) {
@@ -29,6 +34,7 @@ export function getNodeHierarchy(nd: Node, rootNode: Node): Node[] {
     }
     return nodeHierarchy.reverse();
 }
+
 
 // Get node where hierarchies split.
 export function getCommonNode(startHierarchy: Node[], endHierarchy: Node[]) : Node {
@@ -40,4 +46,58 @@ export function getCommonNode(startHierarchy: Node[], endHierarchy: Node[]) : No
         }
     }
     return startHierarchy[maxDepth-1];
+}
+
+
+export function isChildOrGrandChild(childNode: Node, parentNode: Node): boolean {
+    let pNd = childNode.parentNode;
+    while (pNd) {
+        if (pNd.isSameNode(parentNode)) {return true;}
+        pNd = pNd.parentNode;
+    }
+    return false;
+}
+
+
+export function getPreviousSiblingWithText(nd: Node): Node | undefined {
+    while (nd.previousSibling) {
+        nd = nd.previousSibling;
+        if (nd.textContent && nd.textContent.length > 0) {return nd;}
+    }
+    if (!nd.parentNode) {return;}
+    return getPreviousSiblingWithText(nd.parentNode);
+}
+
+
+export function getRightMostTextNode(nd: Node): Node | undefined {
+    if (nd.nodeType === Node.TEXT_NODE) {return nd;}
+    for (let i = nd.childNodes.length-1; i>=0; i--) {
+        const chNd = nd.childNodes[i];
+        if (chNd.textContent && chNd.textContent.length > 0) {
+            return getRightMostTextNode(chNd);
+        }
+    }
+}
+
+
+export function getLeftMostTextNode(nd: Node): Node | undefined {
+    if (nd.nodeType === Node.TEXT_NODE) {return nd;}
+    for (let i = 0; i < nd.childNodes.length; i++) {
+        const chNd = nd.childNodes[i];
+        if (chNd.textContent && chNd.textContent.length > 0) {
+            return getLeftMostTextNode(chNd);
+        }
+    }
+}
+
+export function insertAfter(refNd: Node, nd: Node): void {
+    if (!refNd.parentNode) {
+        console.error("insertAfter: reference node is detached.");
+        return;
+    }
+    if (refNd.nextSibling) {
+        refNd.parentNode.insertBefore(nd, refNd.nextSibling);
+    } else {
+        refNd.parentNode.appendChild(nd);
+    }
 }

@@ -1,4 +1,4 @@
-import { optimyzeNode, onlyForTesting } from '../src/OptimyzeDOM'
+import { optimizeNode, onlyForTesting } from '../src/OptimyzeDOM'
 import { CSSObj } from '../src/Styling'
 
 const { optimizeNodeList } = onlyForTesting;
@@ -6,22 +6,31 @@ const { optimizeNodeList } = onlyForTesting;
 describe('Testing optimization of simplest nodes', () => {
     test('text node', () => {
         const nd = document.createTextNode("testText");
-        const res = optimyzeNode(nd);
+        const res = optimizeNode(nd);
         expect(res?.nodeType).toBe(Node.TEXT_NODE);
         expect(res?.textContent).toBe("testText");
     });
 
     test('br', () => {
         const nd = document.createElement("BR");
-        const res = optimyzeNode(nd);
+        const res = optimizeNode(nd);
         expect(res?.nodeName).toBe("BR");
         expect(res?.textContent).toBe("");
     });
 
     test('empty span', () => {
         const nd = document.createElement("SPAN");
-        const res = optimyzeNode(nd);
+        const res = optimizeNode(nd);
         expect(res).toBe(undefined);
+    });
+
+    test('div with text node', () => {
+        const nd = document.createElement("DIV");
+        const ndTxt = document.createTextNode("testText");
+        nd.appendChild(ndTxt);
+        const res = optimizeNode(nd);
+        expect(res?.nodeName).toBe("DIV");
+        expect(res?.textContent).toBe("testText");
     });
 });
 
@@ -30,7 +39,7 @@ describe('Testing SPAN without styles', () => {
         const ndSp = document.createElement("SPAN");
         const nd = document.createTextNode("testText");
         ndSp.appendChild(nd)
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeType).toBe(Node.TEXT_NODE);
         expect(res?.textContent).toBe("testText");
     });
@@ -41,7 +50,7 @@ describe('Testing SPAN without styles', () => {
         const nd2 = document.createTextNode("Text");
         ndSp.appendChild(nd1)
         ndSp.appendChild(nd2)
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeType).toBe(Node.TEXT_NODE);
         expect(res?.textContent).toBe("testText");
     });
@@ -54,10 +63,18 @@ describe('Testing SPAN without styles', () => {
         ndSp.appendChild(nd1)
         ndSp.appendChild(nd)
         ndSp.appendChild(nd2)
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.childNodes.length).toBe(3);
         expect(res?.childNodes[1].nodeName).toBe("BR");
+    });
+
+    test('span with text and empty span', () => {
+        const ndSp = document.createElement("SPAN");
+        ndSp.innerHTML = 'Hello World<span></span>.'
+        const res = optimizeNode(ndSp) as HTMLElement;
+        expect(res?.nodeType).toBe(Node.TEXT_NODE);
+        expect(res?.textContent).toBe("Hello World.");
     });
 
     test('span with 2 text elements and another span with br', () => {
@@ -71,7 +88,7 @@ describe('Testing SPAN without styles', () => {
         ndSp.appendChild(nd1)
         ndSp.appendChild(ndSpEmb)
         ndSp.appendChild(nd2)
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.childNodes.length).toBe(3);
         expect(res?.childNodes[1].nodeName).toBe("BR");
@@ -82,8 +99,10 @@ describe('Testing SPAN without styles', () => {
         const nd = document.createElement("P");
         nd.innerHTML = "Hello <span>World</span>.";
 
-        const res = optimyzeNode(nd) as HTMLElement;
-        expect(res?.nodeType).toBe(Node.TEXT_NODE);
+        const res = optimizeNode(nd) as HTMLElement;
+        expect(res?.nodeName).toBe("P");
+        expect(res?.childNodes.length).toBe(1);
+        expect(res?.childNodes[0].nodeType).toBe(Node.TEXT_NODE);
         expect(res?.textContent).toBe("Hello World.");
     });
 });
@@ -94,7 +113,7 @@ describe('Testing SPAN with styles', () => {
         ndSp.style.fontWeight = "bold";
         const nd = document.createTextNode("testText");
         ndSp.appendChild(nd)
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.style.fontWeight).toBe("bold");
         expect(res?.textContent).toBe("testText");
@@ -104,7 +123,7 @@ describe('Testing SPAN with styles', () => {
         const ndSp = document.createElement("SPAN");
         ndSp.style.fontWeight = "bold";
         ndSp.innerHTML = 'Hello <span style="font-weight:bold">World</span>.'
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.style.fontWeight).toBe("bold");
         expect(res?.childNodes.length).toBe(1);
@@ -118,7 +137,7 @@ describe('Testing SPAN with styles', () => {
         ndSp.style.fontSize="32pt";
         // Inner span doesn't modify style properties from parent
         ndSp.innerHTML = 'Hello <span style="font-weight:bold">World</span>.'
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.style.fontWeight).toBe("bold");
         expect(res?.childNodes.length).toBe(1);
@@ -126,18 +145,47 @@ describe('Testing SPAN with styles', () => {
         expect(res?.textContent).toBe("Hello World.");
     });
 
-    test('span with another span, which have the different style', () => {
+    test('span with another span, which have the different style-1', () => {
+        const ndSp = document.createElement("SPAN");
+        ndSp.style.fontWeight = "bold";
+        ndSp.style.fontSize="32pt";
+        // Inner span doesn't modify style properties from parent
+        ndSp.innerHTML = '<span style="font-weight:normal">Hello World</span>'
+        const res = optimizeNode(ndSp) as HTMLElement;
+        expect(res?.nodeName).toBe("SPAN");
+        expect(res?.style.fontWeight).toBe("normal");
+        expect(res?.childNodes.length).toBe(1);
+        expect(res?.textContent).toBe("Hello World");
+        expect(res?.innerHTML).toBe('Hello World');
+    });
+
+    test('span with another span, which have the different style-2', () => {
         const ndSp = document.createElement("SPAN");
         ndSp.style.fontWeight = "bold";
         ndSp.style.fontSize="32pt";
         // Inner span doesn't modify style properties from parent
         ndSp.innerHTML = 'Hello <span style="font-weight:normal">World</span>.'
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.style.fontWeight).toBe("bold");
         expect(res?.childNodes.length).toBe(3);
         expect(res?.textContent).toBe("Hello World.");
         expect(res?.innerHTML).toBe('Hello <span style="font-weight:normal">World</span>.');
+    });
+
+    test('div with span with another span, which have the different style', () => {
+        const ndSp = document.createElement("SPAN");
+        ndSp.style.fontWeight = "bold";
+        ndSp.style.fontSize="32pt";
+        // Inner span doesn't modify style properties from parent
+        ndSp.innerHTML = '<span style="font-weight:normal">Hello World</span>'
+
+        const ndDiv = document.createElement("DIV");
+        ndDiv.appendChild(ndSp);
+
+        const res = optimizeNode(ndDiv) as HTMLElement;
+        expect(res?.nodeName).toBe("DIV");
+        expect(res?.textContent).toBe("Hello World");
     });
 
     test('span with multiple spans, which have the same style', () => {
@@ -146,7 +194,7 @@ describe('Testing SPAN with styles', () => {
         ndSp.style.fontSize="32pt";
         // Inner span doesn't modify style properties from parent
         ndSp.innerHTML = 'Hello <span style="font-weight:normal">World</span><span style="font-weight:normal">.</span>'
-        const res = optimyzeNode(ndSp) as HTMLElement;
+        const res = optimizeNode(ndSp) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.style.fontWeight).toBe("bold");
         expect(res?.childNodes.length).toBe(2);
@@ -160,10 +208,28 @@ describe('Testing SPAN with styles', () => {
         // Inner span doesn't modify style properties from parent
         ndSp.innerHTML = 'Hello <span style="font-weight:normal">World</span><span style="font-weight:normal">.</span>'
         const style = {"font-weight": "normal"} as CSSObj;
-        const res = optimyzeNode(ndSp, style) as HTMLElement;
+        const res = optimizeNode(ndSp, style) as HTMLElement;
         expect(res?.nodeName).toBe("SPAN");
         expect(res?.childNodes.length).toBe(1);
         expect(res?.innerHTML).toBe('Hello World.');
+    });
+
+    test('paragraphs in div', () => {
+        const rootNd = document.createElement("DIV");
+        const p1 = document.createElement("P");
+        p1.textContent = "text1";
+        rootNd.appendChild(p1);
+        const p2 = document.createElement("P");
+        p2.textContent = "text2";
+        rootNd.appendChild(p2);
+
+        const nd2 = document.createElement("BR");
+        const res = optimizeNode(rootNd, {});
+
+        expect(res?.nodeName).toBe("DIV");
+        expect(res?.childNodes.length).toBe(2);
+        expect(res?.childNodes[0].nodeName).toBe("P");
+        expect(res?.childNodes[1].nodeName).toBe("P");
     });
 });
 
