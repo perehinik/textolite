@@ -20,21 +20,20 @@ export class Editor {
         this.setStyleFromObj = this.setStyleFromObj.bind(this);
         this.selectionChanged = this.selectionChanged.bind(this);
         this.keyUpHandler = this.keyUpHandler.bind(this);
-        this.keyDownHandler = this.keyDownHandler.bind(this);
         this.updateToolboxStyleFromSelection = this.updateToolboxStyleFromSelection.bind(this);
         this.removeEmptyNodes = this.removeEmptyNodes.bind(this);
 
-        this.editorContainer = this.getEditorRootNode(divId);
+        this.editorContainer = Editor.getEditorRootNode(divId);
         
         this.containerId = this.editorContainer.id;
         this.toolsDivId = this.containerId + "-tools";
         this.editorDivId = this.containerId + "-editor";
 
-        const toolsNd = this.createToolboxContainer();
+        const toolsNd = Editor.createToolboxContainer(this.toolsDivId);
         this.tools = new Tools(toolsNd, this.setStyleFromObj);
         this.editorContainer.appendChild(toolsNd);
 
-        const editrNd = this.createEditorContainer();
+        const editrNd = Editor.createEditorContainer(this.editorDivId);
         // editorNd might be replaced during editor lifecycle. 
         // Events are not reconnected during replacement. That's why eventNd is needed.
         const eventNd = document.createElement("div");
@@ -49,11 +48,10 @@ export class Editor {
         
         eventNd.addEventListener('mouseup', this.selectionChanged);
         eventNd.addEventListener('keyup', this.keyUpHandler);
-        eventNd.addEventListener('keyup', this.keyDownHandler);
         eventNd.addEventListener('mousedown', () => {this.removeEmptyNodes(false)});
     }
 
-    getEditorRootNode(divId?: string): HTMLElement {
+    static getEditorRootNode(divId?: string): HTMLElement {
         let nd: HTMLElement | null = null;
         if (divId) { 
             nd = document.getElementById(divId); 
@@ -68,15 +66,15 @@ export class Editor {
         return nd;
     }
 
-    createToolboxContainer(): HTMLDivElement {
+    static createToolboxContainer(id: string): HTMLDivElement {
         const toolboxDiv: HTMLDivElement = document.createElement("div");
-        toolboxDiv.id = this.toolsDivId;
+        toolboxDiv.id = id;
         return toolboxDiv;
     }
 
-    createEditorContainer(): HTMLDivElement {
+    static createEditorContainer(id: string): HTMLDivElement {
         const editorDiv: HTMLDivElement = document.createElement("div");
-        editorDiv.id = this.editorDivId
+        editorDiv.id = id
         editorDiv.contentEditable = "true";
         editorDiv.style.minHeight = "100px";
         editorDiv.style.display = "inline-block";
@@ -90,23 +88,16 @@ export class Editor {
     }
 
 
-    selectionChanged(ev: MouseEvent) {
+    selectionChanged(ev?: MouseEvent) {
         this.updateToolboxStyleFromSelection();
     }
 
 
     keyUpHandler(ev: KeyboardEvent) {
-        const updateToolboxKeys = ['Backspace', 'ArrowLeft', 'ArrowRight']
+        const updateToolboxKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
         if (updateToolboxKeys.includes(ev.key)) {
             this.removeEmptyNodes(true);
             this.updateToolboxStyleFromSelection();
-        }
-    }
-
-
-    keyDownHandler(ev: KeyboardEvent) {
-        if (ev.key === "Enter") {
-            //document.execCommand
         }
     }
 
@@ -126,7 +117,7 @@ export class Editor {
         let selAdj = getAdjSelection(true, rootNode);
         if (selAdj) {
             if (!selAdj.isEmpty) {
-                this.updateStyleAndOptimyze(rootNode, selAdj, newStyle);
+                this.updateStyleAndOptimize(rootNode, selAdj, newStyle);
             } else {
                 this.setCursorStyle(selAdj, newStyle)
             }
@@ -134,18 +125,20 @@ export class Editor {
     }
 
 
-    updateStyleAndOptimyze(rootNode: Node, sel: SelectionAdj, newStyle: CSSObj): void {
+    updateStyleAndOptimize(rootNode: Node, sel: SelectionAdj, newStyle: CSSObj): void {
         setStyle(sel, newStyle);
         // Optimize DOM structure after style update
         //ToDo IP: this can be upgraded to optimyze only modified nodes, not the whoile editor tree.
         const nodeReplacement = rootNode ? optimizeNode(rootNode, defaultStyle) as HTMLElement : null;
+        let nd = rootNode;
 
         if (rootNode && rootNode.parentNode && nodeReplacement) {
-            rootNode.parentNode.replaceChild(nodeReplacement, rootNode) 
+            rootNode.parentNode.replaceChild(nodeReplacement, rootNode);
+            nd = nodeReplacement;
         }
         // Because DOM structure may have been changed we need to update selection range
         restoreSelection(
-            nodeReplacement as Node, 
+            nd as Node, 
             sel.startIndex ? sel.startIndex : 0, 
             sel.endIndex ? sel.endIndex : 0
         );
@@ -189,9 +182,6 @@ export class Editor {
         }
         this.emptyNodes = [];
         if (selAdj && restoreSelection) {
-            if (selAdj.endNode.textContent && selAdj.endOffset > selAdj.endNode.textContent?.length) {
-                selAdj.endOffset = selAdj.endNode.textContent.length
-            }
             setSelection(selAdj.endNode, selAdj.endOffset, selAdj.endNode, selAdj.endOffset);
         }
     }
@@ -210,7 +200,6 @@ export class Editor {
         const ndText = document.createTextNode("\u200b");
         ndInsert.appendChild(ndText);
         this.emptyNodes.push(ndText);
-        this.emptyNodes.push(ndInsert);
 
         if (offset === 0) {
             nd.parentNode.insertBefore(ndInsert, nd);

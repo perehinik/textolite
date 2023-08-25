@@ -76,6 +76,10 @@ export function restoreSelection(nd: Node, startIndex: number, endIndex: number)
 }
 
 export function setSelection(startNd: Node, startOffset: number, endNd: Node, endOffset: number): void {
+    if (!startNd.textContent || !endNd.textContent) {return;}
+    // Limit offsets to node text length.
+    startOffset = Math.min(Math.max(startOffset, 0), startNd.textContent.length);
+    endOffset = Math.min(Math.max(endOffset, 0), endNd.textContent.length);
     let sel = window.getSelection();
     const selRange = document.createRange();
     selRange.setStart(startNd, startOffset);
