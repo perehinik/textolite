@@ -26,7 +26,7 @@ export class Button{
         this.btEl.addEventListener("click", this.onClickHandler, false);
     }
 
-    onClickHandler(event: MouseEvent) {
+    onClickHandler(ev?: MouseEvent) {
         this.setState(!this.state);
         if (this.onStateChange) {
             this.onStateChange(this.state ? this.valueOn : this.valueOff);
