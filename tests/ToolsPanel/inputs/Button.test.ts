@@ -53,6 +53,27 @@ describe('Testing onClickHandler', () => {
     });
 });
 
+describe('Testing onClickHandler integration', () => {
+    test('state is off', () => {
+        const button = buildButton();
+
+        button.onClickHandler();
+
+        expect(styleChangedMock.mock.calls).toHaveLength(1);
+        expect(styleChangedMock.mock.calls[0][0]).toEqual({"state": "ON"});
+    });
+
+    test('state is on', () => {
+        const button = buildButton();
+        button.state = true;
+
+        button.onClickHandler();
+
+        expect(styleChangedMock.mock.calls).toHaveLength(1);
+        expect(styleChangedMock.mock.calls[0][0]).toEqual({"state": "OFF"});
+    });
+});
+
 describe('Testing setState', () => {
     test('set true', () => {
         const button = buildButton();
@@ -84,6 +105,4 @@ describe('Testing getValue', () => {
         button.state = false;
         expect(button.getValue()).toEqual({"state": "OFF"});
     });
-
-
 });

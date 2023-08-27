@@ -1,3 +1,11 @@
+/**
+ * @module Button - Module contains implementation of editor tolbox button.
+ * @author Ivan Perehiniak <iv.perehinik@gmail.com>
+ */
+
+/**
+ * Class implements editor toolbox button functionality.
+ */
 export class Button{
     btImgWidth: number = 20;
     btImgHeight: number = 20;
@@ -7,6 +15,14 @@ export class Button{
     valueOff: object;
     onStateChange: Function;
 
+    /**
+     * Toolbox button constructor.
+     *
+     * @param icon - String with SVG icon.
+     * @param valueOn - Value for ON state of button.
+     * @param valueOff - Value for OFF state of button.
+     * @param onStateChange - Callback for button state update.
+     */
     constructor(icon: string, valueOn: object, valueOff: object, onStateChange: Function) {
         this.btEl = document.createElement("button");
         this.valueOn = valueOn;
@@ -25,7 +41,12 @@ export class Button{
         this.btEl.onmousedown = (event) => {event.preventDefault();};
         this.btEl.addEventListener("click", this.onClickHandler, false);
     }
-
+    
+    /**
+     * Calback for button state change.
+     *
+     * @param newStyle - New style state of toolbox input.
+     */
     onClickHandler(ev?: MouseEvent) {
         this.setState(!this.state);
         if (this.onStateChange) {
@@ -33,7 +54,12 @@ export class Button{
         }
     }
 
-    setState(newState: boolean) {
+    /**
+     * Set button state without firing button state update callback.
+     *
+     * @param newState - If true - button set to ON.
+     */
+    setState(newState: boolean): void {
         this.state = newState;
         if (this.state) {
             this.btEl.style.backgroundColor = "rgba(200, 200, 200, 0.5)"
@@ -41,7 +67,12 @@ export class Button{
             this.btEl.style.backgroundColor = "transparent"
         }
     }
-
+    
+    /**
+     * Returns object representing current button state.
+     *
+     * @param newState - Object representing current button state.
+     */
     getValue(): object {
         return this.state ? this.valueOn : this.valueOff;
     }

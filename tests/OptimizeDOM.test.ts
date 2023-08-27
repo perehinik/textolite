@@ -1,4 +1,4 @@
-import { optimizeNode, onlyForTesting } from '../src/OptimyzeDOM'
+import { optimizeNode, onlyForTesting } from '../src/OptimizeDOM'
 import { CSSObj } from '../src/Styling'
 
 const { optimizeNodeList } = onlyForTesting;

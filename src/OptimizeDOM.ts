@@ -1,7 +1,17 @@
+/**
+ * @module OptimizeDOM - Module contains tools for DOM optimization.
+ * @author Ivan Perehiniak <iv.perehinik@gmail.com>
+ */
+
 import { CSSObj, getStyle, applyOverlappingStyle, compareChildStyle, compareNodeStyles } from './Styling'
 
-
-// vertical optimization
+/**
+ * Optimize Node and all children to concatenate/remove spans with same styles.
+ *
+ * @param nd - Node to be optimized.
+ * @param parentStyle - Style of parent node.
+ * @returns Optional node as result of optimization.
+ */
 export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     if (nd.nodeType === Node.TEXT_NODE) {return nd.cloneNode();}
     if (nd.nodeName === "BR") {return nd.cloneNode();}
@@ -41,7 +51,7 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         }
     }
 
-    // Optimyze node list horizontally
+    // Optimize node list horizontally
     res = optimizeNodeList(res);
 
     if (res.length === 0 && nd.nodeName !== "DIV" && nd.nodeName !== "P") {return;}
@@ -75,7 +85,12 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     return resNd;  
 }
 
-
+/**
+ * Optimize Node list. Concatenate neighbors with same style/type into 1 node.
+ *
+ * @param ndList - List of nodes.
+ * @returns Optimized node list.
+ */
 export function optimizeNodeList(ndList: Node[]): Node[] {
     const res: Node[] = [];
 

@@ -1,3 +1,8 @@
+/**
+ * @module SelectionAdj - Module contains tools for working with adjusted selection.
+ * @author Ivan Perehiniak <iv.perehinik@gmail.com>
+ */
+
 import { 
     getChildNodeByIndex, 
     getNodeHierarchy, 
@@ -9,6 +14,19 @@ import {
     insertAfter
 } from "./DOMTools";
 
+/**
+ * Contains properties of adjusted selection.
+ *
+ * @param startNode - Node which contains the start position of selection.
+ * @param startOffset - Offset to selection start.
+ * @param endNode - Node which contains the end position of selection.
+ * @param endOffset - Offset to selection end.
+ * @param commonNode - Root node. Contains start and end of selection.
+ * @param rootNode - Root editor div.
+ * @param startIndex - Offset to selection start for root node.
+ * @param endIndex - Offset to selection end for root node.
+ * @param isEmpty - True if selection start and end position are the same - caret.
+ */
 export type SelectionAdj = {
     startNode: Node,
     startOffset: number,
@@ -21,7 +39,13 @@ export type SelectionAdj = {
     isEmpty: boolean
 };
 
-
+/**
+ * Converts document Style object to more convenient format.
+ *
+ * @param splitNodes - If true -splits nodes so start offset is always 0, end offset = length of text in node.
+ * @param rootNode - Root editor div.
+ * @returns Adjusted selection.
+ */
 export function getAdjSelection(splitNodes: boolean, rootNode: Node): SelectionAdj | undefined {
     let sel = window.getSelection();
     if (!sel || !sel.anchorNode || !sel.focusNode || !rootNode) {return;}
@@ -58,7 +82,13 @@ export function getAdjSelection(splitNodes: boolean, rootNode: Node): SelectionA
     return fixSelectionEnd(selAdj);
 }
 
-
+/**
+ * Sets selection to child nodes of `nd` based on indexes from start of the node.
+ *
+ * @param nd - Root node
+ * @param startIndex - Offset from start of node to start of selection.
+ * @param endIndex - Offset from start of node to end of selection.
+ */
 export function restoreSelection(nd: Node, startIndex: number, endIndex: number): void {
     const startNd = getChildNodeByIndex(nd, startIndex);
     const endNd = getChildNodeByIndex(nd, endIndex);
@@ -75,6 +105,14 @@ export function restoreSelection(nd: Node, startIndex: number, endIndex: number)
     setSelection(startNd.node, startNd.offset, endNd.node, endNd.offset);
 }
 
+/**
+ * Sets document selection based on start/end nodes asnd offsets.
+ *
+ * @param startNd - If true - Node which contains start of the selection.
+ * @param startOffset - Offset to start of selection.
+ * @param endNd - If true - Node which contains end of the selection.
+ * @param endOffset - Offset to end of selection.
+ */
 export function setSelection(startNd: Node, startOffset: number, endNd: Node, endOffset: number): void {
     if (!startNd.textContent || !endNd.textContent) {return;}
     // Limit offsets to node text length.
@@ -88,8 +126,13 @@ export function setSelection(startNd: Node, startOffset: number, endNd: Node, en
     sel?.addRange(selRange);
 }
 
-// This fixes situation when selection ends with index 0.
-// In this case selection end is replaced with the end of previous text node.
+/**
+ * This fixes situation when selection ends with index 0.
+ * In this case selection end is replaced with the end of previous text node.
+ *
+ * @param sel - Adjusted selection object.
+ * @returns Adjusted selection object.
+ */
 function fixSelectionEnd(sel: SelectionAdj): SelectionAdj {
     if (sel.endOffset !== 0) {return sel;}
     const prevSibl = getPreviousSiblingWithText(sel.endNode);
@@ -101,7 +144,14 @@ function fixSelectionEnd(sel: SelectionAdj): SelectionAdj {
     return sel;
 }
 
-
+/**
+ * Returns reelative position of offset in node `nd` relating to start of rootNode.
+ *
+ * @param nd - Node with offset.
+ * @param offset - Offset from start of `nd`.
+ * @param rootNode - Base node for returned offset.
+ * @returns Reelative position of offset in node `nd` relating to start of rootNode.
+ */
 function getIndex(nd: Node | null, offset: number, rootNode: Node) : number | undefined {
     if (!nd?.parentElement ) {return;};
     let currentNode = nd;
@@ -138,7 +188,15 @@ function getIndex(nd: Node | null, offset: number, rootNode: Node) : number | un
     }
 }
 
-
+/**
+ * Verifies if document Selection anchor node is after focus node.
+ * This would mean that selection was made backwards.
+ *
+ * @param anchorHierarchy - List with root node and all children in hierarchy to selection anchorNode.
+ * @param focusHierarchy - List with root node and all children in hierarchy to selection focusNode.
+ * @param commonNode - Closest common node to focus and anchor nodes.
+ * @returns True if anchor node if after focus node in DOM.
+ */
 function isReverseSelection(anchorHierarchy: Node[], focusHierarchy: Node[], commonNode: Node) : boolean {
     const maxDepth = Math.min(anchorHierarchy.length, focusHierarchy.length)
     let commonNodeDepth = 0;
@@ -156,7 +214,13 @@ function isReverseSelection(anchorHierarchy: Node[], focusHierarchy: Node[], com
     return false;
 }
 
-
+/**
+ * Limits selection to specified node.
+ *
+ * @param selAdj - Selection object.
+ * @param limitNode - If selection start or end is not inn this node they will be limited to be inside.
+ * @returns Adjusted selection.
+ */
 function limitSelectionToNode(selAdj: SelectionAdj, limitNode: Node): SelectionAdj {
     // Fix situation when selection is out of root node.
     let startEndNodeUpdated = false;
@@ -179,9 +243,7 @@ function limitSelectionToNode(selAdj: SelectionAdj, limitNode: Node): SelectionA
     if (startEndNodeUpdated) {
         const selIsOneNode = selAdj.startNode.isSameNode(selAdj.endNode);
         //if (selIsOneNode && sel.anchorOffset === sel.focusOffset) {return;}
-
         let commonNode = selAdj.startNode.parentNode ? selAdj.startNode.parentNode : selAdj.startNode;
-
         if (!selIsOneNode) {
             let anchorHierarchy = getNodeHierarchy(selAdj.startNode, limitNode);
             let focusHierarchy = getNodeHierarchy(selAdj.endNode, limitNode);
@@ -192,7 +254,13 @@ function limitSelectionToNode(selAdj: SelectionAdj, limitNode: Node): SelectionA
     return selAdj;
 }
 
-
+/**
+ * Splits selection start and end in order to be able to update style only for parts of nodes 
+ * which are inside the selection.
+ *
+ * @param selAdj - Selection object.
+ * @returns Adjusted selection.
+ */
 function splitSelectionNodes(selAdj: SelectionAdj): SelectionAdj {
     const selIsOneNode = selAdj.startNode.isSameNode(selAdj.endNode);
     // Check if selection is on the middle of some node.
@@ -214,7 +282,14 @@ function splitSelectionNodes(selAdj: SelectionAdj): SelectionAdj {
     return selAdj;
 }
 
-
+/**
+ * Splits selection start in order to be able to update style only for part of start node
+ * which is inside the selection.
+ *
+ * @param nd - Selection start node.
+ * @param offset - Selection start offset.
+ * @returns New start node. Offset = 0.
+ */
 function splitStart(nd: Node, offset: number): Node {
     if (nd.nodeType !== Node.TEXT_NODE) {
         console.error("splitStart accepts only text nodes, not ", nd.nodeType);
@@ -235,7 +310,14 @@ function splitStart(nd: Node, offset: number): Node {
     return ndInsert.childNodes[0];
 }
 
-
+/**
+ * Splits selection end in order to be able to update style only for part of end node
+ * which is inside the selection.
+ *
+ * @param nd - Selection end node.
+ * @param offset - Selection end offset.
+ * @returns New start node. Offset = node text length.
+ */
 function splitEnd(nd: Node, offset: number): Node {
     if (nd.nodeType !== Node.TEXT_NODE) {
         console.error("splitEnd accepts only text nodes, not ", nd.nodeType);

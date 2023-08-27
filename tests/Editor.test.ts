@@ -2,7 +2,7 @@ import { getPreviousSiblingWithText } from "../src/DOMTools";
 import { Editor } from "../src/Editor";
 import * as selectionAdjModule from "../src/SelectionAdj";
 import * as stylingModule from "../src/Styling";
-import * as optimiizeDOMModule from '../src/OptimyzeDOM';
+import * as optimiizeDOMModule from '../src/OptimizeDOM';
 import { SelectionAdj } from "../src/SelectionAdj";
 import { CSSObj } from "../src/Styling";
 
