@@ -15,7 +15,7 @@ describe('Testing constructor', () => {
     test('constructor', () => {
         const button = buildButton();
 
-        expect(button.btEl.nodeName).toBe("BUTTON");
+        expect(button.Element.nodeName).toBe("BUTTON");
         expect(button.state).toBe(false);
         expect(button.onStateChange).toEqual(styleChangedMock);
     });
@@ -81,7 +81,7 @@ describe('Testing setState', () => {
         button.setState(true);
 
         expect(button.state).toBe(true);
-        expect(button.btEl.style.backgroundColor).toEqual("rgba(200, 200, 200, 0.5)");
+        expect(button.Element.style.backgroundColor).toEqual("rgba(200, 200, 200, 0.5)");
     });
 
     test('set false', () => {
@@ -91,7 +91,7 @@ describe('Testing setState', () => {
         button.setState(false);
 
         expect(button.state).toBe(false);
-        expect(button.btEl.style.backgroundColor).toEqual("transparent");
+        expect(button.Element.style.backgroundColor).toEqual("transparent");
     });
 });
 

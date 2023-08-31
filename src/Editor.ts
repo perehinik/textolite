@@ -5,8 +5,8 @@
 
 import { Tools } from './ToolsPanel/Tools';
 import { SelectionAdj, getAdjSelection, setSelection } from './SelectionAdj';
-import { setStyle, CSSObj, getNestedStyle, updateNodeStyle, defaultStyle } from './Styling';
-import { insertAfter, getPreviousSiblingWithText } from './DOMTools';
+import { setStyle, CSSObj, getNestedStyle, updateNodeStyle, defaultStyle, defaultStyleNode } from './Styling';
+import { insertAfter, getPreviousSiblingWithText, getNodeHierarchy } from './DOMTools';
 
 import { optimizeNode } from './OptimizeDOM';
 import { restoreSelection } from "./SelectionAdj";
@@ -42,21 +42,23 @@ export class Editor {
 
         const toolsNd = Editor.createToolboxContainer(this.toolsDivId);
         this.tools = new Tools(toolsNd, this.setStyleFromObj);
-        this.editorContainer.appendChild(toolsNd);
 
-        const editrNd = Editor.createEditorContainer(this.editorDivId);
+        const editorNd = Editor.createEditorContainer(this.editorDivId);
         // editorNd might be replaced during editor lifecycle. 
         // Events are not reconnected during replacement. That's why eventNd is needed.
-        const eventNd = document.createElement("div");
-        eventNd.appendChild(editrNd);
-        updateNodeStyle(eventNd, defaultStyle);
-        this.editorContainer.appendChild(eventNd);
+        const eventNd = Editor.createEventContainer();
+        eventNd.appendChild(editorNd);
+        eventNd.className = 'defaultStyle';
+        updateNodeStyle(editorNd, defaultStyle);
 
         const rootP: HTMLElement = document.createElement("P");
-        rootP.style.display = "inline-block";
         rootP.textContent = "Hello World! I'm just a simple text editor.";
-        editrNd.appendChild(rootP);
+        editorNd.appendChild(rootP);
         
+        this.editorContainer.appendChild(defaultStyleNode);
+        this.editorContainer.appendChild(toolsNd);
+        this.editorContainer.appendChild(eventNd);
+
         eventNd.addEventListener('mouseup', this.selectionChanged);
         eventNd.addEventListener('keyup', this.keyUpHandler);
         eventNd.addEventListener('mousedown', () => {this.removeEmptyNodes(false)});
@@ -99,6 +101,22 @@ export class Editor {
     }
 
     /**
+     * Creates DIV container which incapsulates editor toolbox div.
+     * So after optomization and editor div replace - events are not disconnected.
+     * 
+     * @returns Editor event container.
+     * @static
+     */
+    static createEventContainer(): HTMLDivElement {
+        const eventDiv: HTMLDivElement = document.createElement("div")
+        eventDiv.style.padding = "10px";
+        eventDiv.style.border = "1px solid gray";
+        eventDiv.style.outline = "none";
+        eventDiv.style.backgroundColor = "white";
+        return eventDiv;
+    }
+
+    /**
      * Creates DIV container for editor edit field.
      * 
      * @param id - Id which should be assigned to the container.
@@ -111,11 +129,10 @@ export class Editor {
         editorDiv.contentEditable = "true";
         editorDiv.style.minHeight = "100px";
         editorDiv.style.display = "inline-block";
-        editorDiv.style.padding = "10px";
-        editorDiv.style.margin = "5px";
-        editorDiv.style.border = "1px solid gray";
         editorDiv.style.outline = "none";
-        editorDiv.style.width = "90%";
+        editorDiv.style.width = "100%";
+        editorDiv.style.margin = "0px";
+        editorDiv.style.padding = "0px";
         editorDiv.style.backgroundColor = "white";
         return editorDiv;
     }
@@ -162,13 +179,47 @@ export class Editor {
     setStyleFromObj(newStyle: CSSObj): void {
         const rootNode = document.getElementById(this.editorDivId) as Node;
         let selAdj = getAdjSelection(true, rootNode);
-        if (selAdj) {
-            if (!selAdj.isEmpty) {
-                this.updateStyleAndOptimize(rootNode, selAdj, newStyle);
-            } else {
-                this.setCursorStyle(selAdj, newStyle)
-            }
+        if (!selAdj || !newStyle || !selAdj.startNode) {return;}
+        newStyle = this.setAlignment(selAdj, newStyle);
+        if (!newStyle || Object.keys(newStyle).length === 0) {return;}  
+        if (!selAdj.isEmpty) {
+            this.updateStyleAndOptimize(rootNode, selAdj, newStyle);
+        } else {
+            this.setCursorStyle(selAdj, newStyle)
         }
+    }
+
+    /**
+     * Alignment should be set for child of root editor component, because otherwise it'll not work.
+     * 
+     * @param sel - Selection object.
+     * @param style - New style with alignment parameters.
+     * @returns - Style object with alignment parameter removed.
+     */
+    setAlignment(sel: SelectionAdj, style: CSSObj): CSSObj {
+        if (!style["text-align"] || !sel || !sel.startNode) {return style;}
+        const rootNode = document.getElementById(this.editorDivId) as Node;
+        const startHierarchy = getNodeHierarchy(sel.startNode, rootNode);
+        const endHierarchy = getNodeHierarchy(sel.endNode, rootNode);
+        if (startHierarchy[0] !== rootNode || endHierarchy[0] != rootNode) {
+            delete style["text-align"];
+            return style;
+        }
+        const startAligningNode = startHierarchy[1];
+        const endAligningNode = endHierarchy[1];
+        let startFound = false;
+        const nodeList: Node[] = [];
+        for (let i = 0; i < rootNode.childNodes.length; i ++) {
+            const iNode = rootNode.childNodes[i] as HTMLElement
+            if (!startFound && iNode === startAligningNode) {startFound = true;}
+            // If table is selected - another controls should appear.
+            if (startFound && iNode.style && !iNode.id?.startsWith("table-")) {
+                iNode.style.textAlign = style["text-align"];
+            }
+            if (iNode === endAligningNode) { break; }
+        }
+        delete style["text-align"];
+        return style;
     }
 
     /**
@@ -179,6 +230,7 @@ export class Editor {
      * @param newStyle - New style which should be applied on selection area.
      */
     updateStyleAndOptimize(rootNode: Node, sel: SelectionAdj, newStyle: CSSObj): void {
+        if (!sel || !sel.startNode) {return;}
         setStyle(sel, newStyle);
         // Optimize DOM structure after style update
         //ToDo IP: this can be upgraded to optimyze only modified nodes, not the whoile editor tree.
@@ -205,7 +257,7 @@ export class Editor {
      */
     setCursorStyle(selAdj: SelectionAdj, newStyle: CSSObj): void {
         let cursorNd = selAdj.startNode;
-        if (cursorNd.textContent != undefined && cursorNd.textContent !== "\u200b") {
+        if (cursorNd.textContent !== "\u200b") {
             cursorNd = this.insertEmptySpan(selAdj.startNode, selAdj.startOffset);
         }
         const sel = window.getSelection();
@@ -224,6 +276,7 @@ export class Editor {
     removeEmptyNodes(restoreSelection?: boolean): void {
         const rootNode = document.getElementById(this.editorDivId) as Node;
         const selAdj = getAdjSelection(false, rootNode);
+        if (!selAdj || !selAdj.startNode) {return;}
         for (let i = 0; i < this.emptyNodes.length; i++) {
             const nd = this.emptyNodes[i];
             // Node is not a part of DOM and will be removed during clearing the list.
@@ -258,8 +311,14 @@ export class Editor {
      */
     insertEmptySpan(nd: Node, offset: number): Node {
         if (nd.nodeType !== Node.TEXT_NODE) {
-            console.error("insertEmptySpan accepts only text nodes, not ", nd.nodeType);
-            return nd;
+            if (nd.childNodes.length === 0){
+                const txtNd = document.createTextNode("");
+                nd.appendChild(txtNd);
+                nd = txtNd;
+                offset = 0; 
+            } else {
+                return nd;
+            }
         }
         // if it's already empty node - no need to insert another one.
         if (!nd.textContent && !nd.previousSibling && !nd.nextSibling) {return nd;}

@@ -14,7 +14,54 @@ export type CSSObj = { [name: string]: string };
 export const defaultStyle: CSSObj = {
     'font-weight': 'normal',
     'font-style': 'normal',
-    'text-decoration': 'none'
+    'text-decoration': 'none',
+    'letter-spacing': '0px',
+    'line-height': '1.2',
+    //'vertical-align': 'sub'/'super'
+}
+
+/**
+ * Default styles for all paragraphs used in editor.
+ */
+export const defaultStyleP: CSSObj = {
+    'margin-block-start': '0em',
+    'margin-block-end': '0em',
+    'margin-inline-start': '0px',
+    'margin-inline-end': '0px',
+    'text-indent': '1em',
+}
+
+/**
+ * Default styles combined into HTML style node,.
+ * So it's easier to insert CSS class into DOM.
+ */
+export const defaultStyleNode: HTMLStyleElement = buildDefaultStyleNode();
+
+/**
+ * Encapsulates `defaultStyle` and `defaultStyleP` into style node. 
+ * 
+ * @returns - Default styles combined into HTML style node,.
+ */
+function buildDefaultStyleNode(): HTMLStyleElement {
+    let style = document.createElement('style');
+
+    let styleDescription = '.defaultStyle { ';
+    for (let i = 0; i < Object.keys(defaultStyle).length; i++) {
+        const property = Object.keys(defaultStyle)[i];
+        const value = defaultStyle[property]
+        styleDescription += `${property}: ${value};\n`
+    }
+    styleDescription += '}\n';
+
+    styleDescription += ' .defaultStyle p { \n'
+    for (let i = 0; i < Object.keys(defaultStyleP).length; i++) {
+        const property = Object.keys(defaultStyleP)[i];
+        const value = defaultStyleP[property]
+        styleDescription += `${property}: ${value};\n`
+    }
+    styleDescription += '}';
+    style.innerHTML = styleDescription;
+    return style;
 }
 
 /**
@@ -175,6 +222,7 @@ export function getNestedStyle(sel: SelectionAdj): CSSObj {
  * @param style - Style object.
  */
 export function setStyle(sel: SelectionAdj, style: CSSObj): void {
+    if (!sel || !sel.startNode) {return;}
     // If start and end nendNodeode are the same - selection in one node.
     if (sel.startNode.isSameNode(sel.endNode)) {
         if (sel.startOffset !== sel.endOffset) {

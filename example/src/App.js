@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Editor } from 'textolite';
 
 function App() {
@@ -8,9 +8,9 @@ function App() {
   }, []);
 
   return (    
-    <>
-      <div id={"editor-container"}></div>
-    </>
+    <div style={{display: "flex", justifyContent: "center", paddingTop: "30px"}}>
+      <div id={"editor-container"} style={{width: "90%"}}></div>
+    </div>
   );
 }
 

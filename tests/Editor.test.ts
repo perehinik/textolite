@@ -3,6 +3,7 @@ import { Editor } from "../src/Editor";
 import * as selectionAdjModule from "../src/SelectionAdj";
 import * as stylingModule from "../src/Styling";
 import * as optimiizeDOMModule from '../src/OptimizeDOM';
+import * as DOMToolsModule from '../src/DOMTools';
 import { SelectionAdj } from "../src/SelectionAdj";
 import { CSSObj } from "../src/Styling";
 
@@ -48,6 +49,7 @@ const restoreSelectionSpy = jest.spyOn(selectionAdjModule, 'restoreSelection' as
 const getNestedStyleMock = jest.spyOn(stylingModule, 'getNestedStyle' as any);
 const setStyleMock = jest.spyOn(stylingModule, 'setStyle' as any);
 const optimizeNodeMock = jest.spyOn(optimiizeDOMModule, 'optimizeNode' as any);
+const getNodeHierarchyMock = jest.spyOn(DOMToolsModule, 'getNodeHierarchy' as any);
 
 afterEach(() => {
     let sel = document.getSelection();
@@ -58,6 +60,7 @@ afterEach(() => {
     restoreSelectionSpy.mockReset();
     setStyleMock.mockReset();
     optimizeNodeMock.mockReset();
+    getNodeHierarchyMock.mockReset();
 });
 
 describe('Testing constructor', () => {
@@ -66,10 +69,13 @@ describe('Testing constructor', () => {
 
         expect(editor.toolsDivId).toBe(editor.containerId + "-tools");
         expect(editor.editorDivId).toBe(editor.containerId + "-editor");
+        expect(editor.editorContainer.childNodes.length).toBe(3);
 
-        const toolsDivId = (editor.editorContainer.childNodes[0] as HTMLElement).id;
-        const eventDiv = (editor.editorContainer.childNodes[1] as HTMLElement);
+        const defaultStyleNd = editor.editorContainer.childNodes[0];
+        const toolsDivId = (editor.editorContainer.childNodes[1] as HTMLElement).id;
+        const eventDiv = (editor.editorContainer.childNodes[2] as HTMLElement);
         const editorDivId = (eventDiv.childNodes[0] as HTMLElement).id;
+        expect(defaultStyleNd.nodeName).toBe("STYLE");
         expect(toolsDivId).toBe(editor.toolsDivId);
         expect(editorDivId).toBe(editor.editorDivId);
     });
@@ -115,6 +121,13 @@ describe('Testing createToolboxContainer', () => {
     });
 });
 
+describe('Testing createEventContainer', () => {
+    test('createEventContainer', () => {
+        const nd = Editor.createEventContainer();
+        expect(nd.nodeName).toBe("DIV");
+    });
+});
+
 describe('Testing createEditorContainer', () => {
     test('createEditorContainer', () => {
         const id = "editor-div-id";
@@ -128,13 +141,23 @@ describe('Testing createEditorContainer', () => {
 });
 
 describe('Testing insertEmptySpan', () => {
-    test('wrond node type', () => {
+    test('wrond node type without children', () => {
         const nd = document.createElement("DIV");
         const editor = new Editor();
 
-        const logSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        editor.insertEmptySpan(nd, 0);
-        expect(logSpy).toHaveBeenCalled();
+        const res = editor.insertEmptySpan(nd, 0);
+        expect(res.childNodes.length).toBe(0);
+        expect(nd.childNodes.length).toBe(1);
+        expect(nd.textContent).toBe("");
+    });
+
+    test('wrond node type, with children', () => {
+        const nd = document.createElement("DIV");
+        nd.appendChild(document.createElement("BR"));
+        const editor = new Editor();
+
+        const res = editor.insertEmptySpan(nd, 0);
+        expect(res).toEqual(nd);
     });
 
     test('empty node', () => {
@@ -484,6 +507,157 @@ describe('Testing setStyleFromObj', () => {
         expect(updateStyleAndOptimizeMock.mock.calls[0][0]).toEqual(editorDiv);
         expect(updateStyleAndOptimizeMock.mock.calls[0][1]).toEqual(sel);
         expect(updateStyleAndOptimizeMock.mock.calls[0][2]).toEqual(style);
+    });
+
+    test('only set alignment', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        const updateStyleAndOptimizeMock = jest.fn();
+        const setCursorStyleMock = jest.fn();
+        const setAlignmentMock = jest.fn();
+
+        const sel: SelectionAdj = {
+            startNode: txtNd,
+            startOffset: 1,
+            endNode: txtNd,
+            endOffset: 5,
+            commonNode: editorP,
+            isEmpty: false
+        };
+        getAdjSelectionMock.mockReturnValue(sel);
+        setAlignmentMock.mockReturnValue({});
+
+        editor.updateStyleAndOptimize = updateStyleAndOptimizeMock;
+        editor.setCursorStyle = setCursorStyleMock;
+
+        const style = {"text-align": "left"} as CSSObj;
+        editor.setStyleFromObj(style);
+
+        expect(setCursorStyleMock.mock.calls).toHaveLength(0);
+        expect(updateStyleAndOptimizeMock.mock.calls).toHaveLength(0);
+    });
+});
+
+describe('Testing setAlignment', () => {
+    test('Text node selected', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        const style = {
+            "font-size": "13pt",
+            "text-align": "right"
+        } as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: txtNd,
+            startOffset: 1,
+            endNode: txtNd,
+            endOffset: 5,
+            commonNode: editorP,
+            isEmpty: false
+        };
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+
+        const newStyle = editor.setAlignment(sel, style);
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("right");
+        expect(newStyle).toEqual({"font-size": "13pt"});
+    });
+
+    test('Wrong hierarchy', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        const style = {
+            "font-size": "13pt",
+            "text-align": "right"
+        } as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: txtNd,
+            startOffset: 1,
+            endNode: txtNd,
+            endOffset: 5,
+            commonNode: editorP,
+            isEmpty: false
+        };
+        const nd = document.createTextNode("txt");
+        getNodeHierarchyMock.mockReturnValue([nd]);
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+
+        const newStyle = editor.setAlignment(sel, style);
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+        expect(newStyle).toEqual({"font-size": "13pt"});
+    });
+
+    test('No alignment property in style.', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        const style = {
+            "font-size": "13pt"
+        } as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: txtNd,
+            startOffset: 1,
+            endNode: txtNd,
+            endOffset: 5,
+            commonNode: editorP,
+            isEmpty: false
+        };
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+
+        const newStyle = editor.setAlignment(sel, style);
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+        expect(newStyle).toEqual({"font-size": "13pt"});
+    });
+
+    test('Nested node selected', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        const {commonNd, nd1Span, nd2Span, nd1, nd2, nd3} = buildTree();
+        editorP.appendChild(commonNd);
+
+        const style = {
+            "font-size": "13pt",
+            "text-align": "right"
+        } as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: nd1,
+            startOffset: 1,
+            endNode: nd1,
+            endOffset: 5,
+            commonNode: nd1Span,
+            isEmpty: false
+        };
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+
+        const newStyle = editor.setAlignment(sel, style);
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("right");
+        expect(newStyle).toEqual({"font-size": "13pt"});
+    });
+
+    test('Nested node selected, empty selection', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        const {commonNd, nd1Span, nd2Span, nd1, nd2, nd3} = buildTree();
+        editorP.appendChild(commonNd);
+
+        const style = {
+            "font-size": "13pt",
+            "text-align": "right"
+        } as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: nd2,
+            startOffset: 1,
+            endNode: nd2,
+            endOffset: 1,
+            commonNode: nd2Span,
+            isEmpty: true
+        };
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("");
+
+        const newStyle = editor.setAlignment(sel, style);
+
+        expect((editorP as HTMLElement).style?.textAlign).toBe("right");
+        expect(newStyle).toEqual({"font-size": "13pt"});
     });
 });
 

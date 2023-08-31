@@ -10,7 +10,7 @@ export class Button{
     btImgWidth: number = 20;
     btImgHeight: number = 20;
     state: boolean = false;
-    btEl: HTMLButtonElement;
+    Element: HTMLButtonElement;
     valueOn: object;
     valueOff: object;
     onStateChange: Function;
@@ -24,22 +24,23 @@ export class Button{
      * @param onStateChange - Callback for button state update.
      */
     constructor(icon: string, valueOn: object, valueOff: object, onStateChange: Function) {
-        this.btEl = document.createElement("button");
+        this.Element = document.createElement("button");
+        this.Element.style.display = "inline-block";
         this.valueOn = valueOn;
         this.valueOff = valueOff;
         this.onStateChange = onStateChange;
         
-        this.btEl.innerHTML = icon;
-        (this.btEl.childNodes[0] as HTMLElement).style.width = "" + this.btImgWidth;
-        (this.btEl.childNodes[0] as HTMLElement).style.height = "" + this.btImgHeight;
-        this.btEl.style.border = "none";
-        this.btEl.style.padding = "none";
-        this.btEl.style.backgroundColor = "transparent";
+        this.Element.innerHTML = icon;
+        (this.Element.childNodes[0] as HTMLElement).style.width = "" + this.btImgWidth;
+        (this.Element.childNodes[0] as HTMLElement).style.height = "" + this.btImgHeight;
+        this.Element.style.border = "none";
+        this.Element.style.padding = "none";
+        this.Element.style.backgroundColor = "transparent";
        
         this.onClickHandler = this.onClickHandler.bind(this);
         // preventDefault -> prevent focus to go from text editor to button.
-        this.btEl.onmousedown = (event) => {event.preventDefault();};
-        this.btEl.addEventListener("click", this.onClickHandler, false);
+        this.Element.onmousedown = (event) => {event.preventDefault();};
+        this.Element.addEventListener("click", this.onClickHandler, false);
     }
     
     /**
@@ -62,16 +63,16 @@ export class Button{
     setState(newState: boolean): void {
         this.state = newState;
         if (this.state) {
-            this.btEl.style.backgroundColor = "rgba(200, 200, 200, 0.5)"
+            this.Element.style.backgroundColor = "rgba(200, 200, 200, 0.5)"
         } else {
-            this.btEl.style.backgroundColor = "transparent"
+            this.Element.style.backgroundColor = "transparent"
         }
     }
     
     /**
      * Returns object representing current button state.
      *
-     * @param newState - Object representing current button state.
+     * @returns - Object representing current button state.
      */
     getValue(): object {
         return this.state ? this.valueOn : this.valueOff;

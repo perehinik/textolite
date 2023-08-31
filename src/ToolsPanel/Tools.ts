@@ -4,7 +4,8 @@
  */
 
 import { Button } from './Inputs/Button';
-import { bold, italic, underline } from './icon/icons'
+import { AlignPanel } from './Inputs/AlignPanel';
+import { bold, italic, strikethrough, underline } from './icon/icons'
 import { CSSObj, applyOverlappingStyle, defaultStyle } from '../Styling';
 
 /**
@@ -15,6 +16,8 @@ export class Tools {
     boldButton: Button;
     italicButton: Button;
     underlineButton: Button;
+    strikethroughButton: Button;
+    alignPanel: AlignPanel;
     
     /**
      * Toolbox constructor.
@@ -27,14 +30,25 @@ export class Tools {
         if (toolsDivNd){toolsDivNd.innerHTML = '';}
 
         this.styleChanged = this.styleChanged.bind(this);
+        toolsDivNd.style.height = '25px';
+        toolsDivNd.style.display = 'flex';
 
+        // BUILD TEXT FORMAT PANEL
         this.boldButton = new Button(bold, {'font-weight': 'bold'}, {'font-weight': 'normal'}, this.styleChanged);
         this.italicButton = new Button(italic, {'font-style': 'italic'}, {'font-style': 'normal'}, this.styleChanged);
         // To overvrite underline you can add display: inline-block, but it will introduce ugly bug for multiline mode - don't do that :).        
         this.underlineButton = new Button(underline, {'text-decoration': 'underline'}, {'text-decoration': 'none'}, this.styleChanged);
-        toolsDivNd?.appendChild(this.boldButton.btEl);
-        toolsDivNd?.appendChild(this.italicButton.btEl);
-        toolsDivNd?.appendChild(this.underlineButton.btEl);
+        this.strikethroughButton = new Button(strikethrough, {'text-decoration': 'line-through'}, {'text-decoration': 'none'}, this.styleChanged);
+        toolsDivNd.appendChild(this.boldButton.Element);
+        toolsDivNd.appendChild(this.italicButton.Element);
+        toolsDivNd.appendChild(this.underlineButton.Element);
+        toolsDivNd.appendChild(this.strikethroughButton.Element);
+
+        toolsDivNd.appendChild(this.creteSplitter());
+
+        // BUILD TEXT ALIGN PANEL
+        this.alignPanel = new AlignPanel(this.styleChanged);
+        toolsDivNd.appendChild(this.alignPanel.Element);
     }
 
     /**
@@ -49,6 +63,22 @@ export class Tools {
     }
 
     /**
+     * Creates plitter component which can be used to separate different tools on tools panel.
+     *
+     * @retuns - Splitter element.
+     */
+    creteSplitter(): HTMLDivElement {
+        const div = document.createElement("div");
+        div.style.width = '0px';
+        div.style.height = '18px';
+        div.style.margin = '2px 2px';
+        div.style.display = 'inline-flex';
+        div.style.border = '1px solid grey';
+        div.style.borderColor = 'rgb(220,220,220)';
+        return div;
+    }
+
+    /**
      * Update toolbox from style object, without firing onStateChange callback.
      *
      * @param style - New style state for toolbox inputs.
@@ -59,9 +89,12 @@ export class Tools {
         const fontWeight = newStyle['font-weight'] === 'bold' ? true : false;
         const fontStyle = newStyle['font-style'] === 'italic' ? true : false;
         const underline = newStyle['text-decoration'] === 'underline' || newStyle['text-decoration-line'] === 'underline' ? true : false;
+        const strikethrough = newStyle['text-decoration'] === 'line-through' || newStyle['text-decoration-line'] === 'line-through' ? true : false;
 
         this.boldButton.setState(fontWeight);
         this.italicButton.setState(fontStyle);
         this.underlineButton.setState(underline);
+        this.strikethroughButton.setState(strikethrough);
+        this.alignPanel.setStateByStyle(style);
     }
 }
