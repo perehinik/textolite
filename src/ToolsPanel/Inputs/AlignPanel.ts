@@ -1,10 +1,16 @@
 /**
- * @module Button - Module contains implementation of editor tolbox button.
+ * @module AlignPanel - Module contains implementation of buttons for text alignment.
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
 import { CSSObj } from "../../Styling";
-import { alignLeft, alignCenter, alignRight, alignJustify } from "../icon/icons";
+import { 
+    alignLeftIcon, 
+    alignCenterIcon, 
+    alignRightIcon, 
+    alignJustifyIcon, 
+    buildSVG 
+} from "../icon/icons";
 
 /**
  * Enumerator for all possible alignment states.
@@ -21,8 +27,6 @@ export const alignState = {
  * Class implements alignment toolbox switcher functionality.
  */
 export class AlignPanel{
-    btImgWidth: number = 20;
-    btImgHeight: number = 20;
     state: number = 0;
     Element: HTMLDivElement;
     leftAlignButton: HTMLButtonElement;
@@ -43,10 +47,10 @@ export class AlignPanel{
         
         this.onClickHandler = this.onClickHandler.bind(this);
 
-        this.leftAlignButton = this.createButton(alignLeft, alignState.Left);
-        this.centerAlignButton = this.createButton(alignCenter, alignState.Center);
-        this.rightAlignButton = this.createButton(alignRight, alignState.Right);
-        this.justifyAlignButton = this.createButton(alignJustify, alignState.Justify);
+        this.leftAlignButton = this.createButton(alignLeftIcon, alignState.Left);
+        this.centerAlignButton = this.createButton(alignCenterIcon, alignState.Center);
+        this.rightAlignButton = this.createButton(alignRightIcon, alignState.Right);
+        this.justifyAlignButton = this.createButton(alignJustifyIcon, alignState.Justify);
 
         this.Element.appendChild(this.leftAlignButton);
         this.Element.appendChild(this.centerAlignButton);
@@ -63,15 +67,11 @@ export class AlignPanel{
      */
     createButton(icon: string, onClickState: number): HTMLButtonElement {
         const button = document.createElement("button");
-
-        button.innerHTML = icon;
-        (button.childNodes[0] as HTMLElement).style.width = "" + this.btImgWidth;
-        (button.childNodes[0] as HTMLElement).style.height = "" + this.btImgHeight;
+        const svgImg = buildSVG(icon, "20px", "20px");
+        button.appendChild(svgImg);
         button.style.border = "none";
         button.style.padding = "none";
         button.style.backgroundColor = "transparent";
-       
-        // preventDefault -> prevent focus to go from text editor to button.
         button.onmousedown = (event) => {event.preventDefault();};
         button.addEventListener("click", () => {this.onClickHandler(onClickState)}, false);
         return button;

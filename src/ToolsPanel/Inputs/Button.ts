@@ -3,12 +3,12 @@
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
+import { buildSVG } from "../icon/icons";
+
 /**
  * Class implements editor toolbox button functionality.
  */
-export class Button{
-    btImgWidth: number = 20;
-    btImgHeight: number = 20;
+export class Button {
     state: boolean = false;
     Element: HTMLButtonElement;
     valueOn: object;
@@ -24,29 +24,43 @@ export class Button{
      * @param onStateChange - Callback for button state update.
      */
     constructor(icon: string, valueOn: object, valueOff: object, onStateChange: Function) {
-        this.Element = document.createElement("button");
-        this.Element.style.display = "inline-block";
+        this.onStateChange = onStateChange;
+        this.Element = this.buildElement();
         this.valueOn = valueOn;
         this.valueOff = valueOff;
-        this.onStateChange = onStateChange;
         
-        this.Element.innerHTML = icon;
-        (this.Element.childNodes[0] as HTMLElement).style.width = "" + this.btImgWidth;
-        (this.Element.childNodes[0] as HTMLElement).style.height = "" + this.btImgHeight;
-        this.Element.style.border = "none";
-        this.Element.style.padding = "none";
-        this.Element.style.backgroundColor = "transparent";
-       
+        const svgIcon = buildSVG(icon, "20px", "20px");
+        this.Element.appendChild(svgIcon);
+        this.connectEventHandlers();
+    }
+
+    /**
+     * Connect handlers to events.
+     */
+    connectEventHandlers(): void {
         this.onClickHandler = this.onClickHandler.bind(this);
-        // preventDefault -> prevent focus to go from text editor to button.
         this.Element.onmousedown = (event) => {event.preventDefault();};
         this.Element.addEventListener("click", this.onClickHandler, false);
+    }
+
+    /**
+     * Build button element.
+     *
+     * @returns - Button HTML element.
+     */
+    buildElement(): HTMLButtonElement {
+        const element = document.createElement("button");
+        element.style.display = "inline-block";
+        element.style.border = "none";
+        element.style.padding = "none";
+        element.style.backgroundColor = "transparent";
+        return element;
     }
     
     /**
      * Calback for button state change.
      *
-     * @param newStyle - New style state of toolbox input.
+     * @param ev - Mouse event.
      */
     onClickHandler(ev?: MouseEvent) {
         this.setState(!this.state);

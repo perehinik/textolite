@@ -5,11 +5,33 @@
 
 import { Tools } from './ToolsPanel/Tools';
 import { SelectionAdj, getAdjSelection, setSelection } from './SelectionAdj';
-import { setStyle, CSSObj, getNestedStyle, updateNodeStyle, defaultStyle, defaultStyleNode } from './Styling';
+import { setStyle, CSSObj, getNestedStyle, updateNodeStyle, defaultStyle, defaultStyleNode, buildStyleNode } from './Styling';
 import { insertAfter, getPreviousSiblingWithText, getNodeHierarchy } from './DOMTools';
 
 import { optimizeNode } from './OptimizeDOM';
 import { restoreSelection } from "./SelectionAdj";
+
+
+/**
+ * Styles for selection.
+ */
+const selectionStyle: CSSObj = {
+    selector: ".selectionStyle ::selection",
+    //'background': 'rgba(80, 160, 220, 0.5)',
+    'background': 'rgba(120, 120, 120, 0.5)',    
+}
+
+const selectionStyleMoz: CSSObj = {
+    ...selectionStyle,
+    selector: ".selectionStyle ::-moz-selection",
+}
+
+const selectionStyleWk: CSSObj = {
+    ...selectionStyle,
+    selector: ".selectionStyle ::-webkit-selection",
+}
+
+const selectionStyleNode = buildStyleNode(selectionStyle, selectionStyleMoz, selectionStyleWk);
 
 /**
  * Main class wich implements editor functionality.
@@ -49,6 +71,7 @@ export class Editor {
         const eventNd = Editor.createEventContainer();
         eventNd.appendChild(editorNd);
         eventNd.className = 'defaultStyle';
+        eventNd.classList.add("selectionStyle");
         updateNodeStyle(editorNd, defaultStyle);
 
         const rootP: HTMLElement = document.createElement("P");
@@ -56,6 +79,7 @@ export class Editor {
         editorNd.appendChild(rootP);
         
         this.editorContainer.appendChild(defaultStyleNode);
+        this.editorContainer.appendChild(selectionStyleNode);
         this.editorContainer.appendChild(toolsNd);
         this.editorContainer.appendChild(eventNd);
 
@@ -252,7 +276,7 @@ export class Editor {
     /**
      * Set cursor style, so next inserted symbols will have new style.
      * 
-     * @param sel - Selection object.
+     * @param selAdj - Selection object.
      * @param newStyle - New style which should be applied on selection area.
      */
     setCursorStyle(selAdj: SelectionAdj, newStyle: CSSObj): void {
@@ -264,7 +288,8 @@ export class Editor {
         updateNodeStyle(cursorNd, newStyle);
 
         if (!sel) {return;}
-        sel.collapse(cursorNd, 1);
+        const collapsePos = cursorNd.textContent !== "\u200b" ? 0 : 1;
+        sel.collapse(cursorNd, collapsePos);
     }
 
     /**

@@ -5,8 +5,10 @@
 
 import { Button } from './Inputs/Button';
 import { AlignPanel } from './Inputs/AlignPanel';
-import { bold, italic, strikethrough, underline } from './icon/icons'
+import { TextColorButton } from './Inputs/TextColorButton';
+import { boldIcon, italicIcon, strikethroughIcon, underlineIcon } from './icon/icons'
 import { CSSObj, applyOverlappingStyle, defaultStyle } from '../Styling';
+import { TextBkGndColorButton } from './Inputs/TextBkGndColorButton';
 
 /**
  * Class implements editor toolbox functionality.
@@ -18,6 +20,8 @@ export class Tools {
     underlineButton: Button;
     strikethroughButton: Button;
     alignPanel: AlignPanel;
+    fontColorButton: TextColorButton;
+    fontBgColorButton: TextBkGndColorButton;
     
     /**
      * Toolbox constructor.
@@ -32,13 +36,15 @@ export class Tools {
         this.styleChanged = this.styleChanged.bind(this);
         toolsDivNd.style.height = '25px';
         toolsDivNd.style.display = 'flex';
+        toolsDivNd.style.alignItems = "center";
+        toolsDivNd.style.paddingBottom = '2px';
 
         // BUILD TEXT FORMAT PANEL
-        this.boldButton = new Button(bold, {'font-weight': 'bold'}, {'font-weight': 'normal'}, this.styleChanged);
-        this.italicButton = new Button(italic, {'font-style': 'italic'}, {'font-style': 'normal'}, this.styleChanged);
+        this.boldButton = new Button(boldIcon, {'font-weight': 'bold'}, {'font-weight': 'normal'}, this.styleChanged);
+        this.italicButton = new Button(italicIcon, {'font-style': 'italic'}, {'font-style': 'normal'}, this.styleChanged);
         // To overvrite underline you can add display: inline-block, but it will introduce ugly bug for multiline mode - don't do that :).        
-        this.underlineButton = new Button(underline, {'text-decoration': 'underline'}, {'text-decoration': 'none'}, this.styleChanged);
-        this.strikethroughButton = new Button(strikethrough, {'text-decoration': 'line-through'}, {'text-decoration': 'none'}, this.styleChanged);
+        this.underlineButton = new Button(underlineIcon, {'text-decoration': 'underline'}, {'text-decoration': 'none'}, this.styleChanged);
+        this.strikethroughButton = new Button(strikethroughIcon, {'text-decoration': 'line-through'}, {'text-decoration': 'none'}, this.styleChanged);
         toolsDivNd.appendChild(this.boldButton.Element);
         toolsDivNd.appendChild(this.italicButton.Element);
         toolsDivNd.appendChild(this.underlineButton.Element);
@@ -49,6 +55,17 @@ export class Tools {
         // BUILD TEXT ALIGN PANEL
         this.alignPanel = new AlignPanel(this.styleChanged);
         toolsDivNd.appendChild(this.alignPanel.Element);
+
+        toolsDivNd.appendChild(this.creteSplitter());
+
+        // BUILD COLOR PANEL
+        this.fontColorButton = new TextColorButton(this.styleChanged);
+        toolsDivNd.appendChild(this.fontColorButton.Element);
+
+        this.fontBgColorButton = new TextBkGndColorButton(this.styleChanged);
+        toolsDivNd.appendChild(this.fontBgColorButton.Element);
+
+        toolsDivNd.appendChild(this.creteSplitter());
     }
 
     /**

@@ -12,6 +12,7 @@ export type CSSObj = { [name: string]: string };
  * Default styles used in editor.
  */
 export const defaultStyle: CSSObj = {
+    selector: ".defaultStyle",
     'font-weight': 'normal',
     'font-style': 'normal',
     'text-decoration': 'none',
@@ -24,6 +25,7 @@ export const defaultStyle: CSSObj = {
  * Default styles for all paragraphs used in editor.
  */
 export const defaultStyleP: CSSObj = {
+    selector: ".defaultStyle p",
     'margin-block-start': '0em',
     'margin-block-end': '0em',
     'margin-inline-start': '0px',
@@ -35,31 +37,32 @@ export const defaultStyleP: CSSObj = {
  * Default styles combined into HTML style node,.
  * So it's easier to insert CSS class into DOM.
  */
-export const defaultStyleNode: HTMLStyleElement = buildDefaultStyleNode();
+export const defaultStyleNode: HTMLStyleElement = buildStyleNode(defaultStyle, defaultStyleP);
 
 /**
- * Encapsulates `defaultStyle` and `defaultStyleP` into style node. 
- * 
- * @returns - Default styles combined into HTML style node,.
+ * Encapsulates multiple/single styles into style node.
+ *
+ * @param - single or multiple CSSObj.
+ * @returns - CSSObj styles combined into HTML style node,.
  */
-function buildDefaultStyleNode(): HTMLStyleElement {
+export function buildStyleNode(...args: CSSObj[]): HTMLStyleElement {
     let style = document.createElement('style');
-
-    let styleDescription = '.defaultStyle { ';
-    for (let i = 0; i < Object.keys(defaultStyle).length; i++) {
-        const property = Object.keys(defaultStyle)[i];
-        const value = defaultStyle[property]
-        styleDescription += `${property}: ${value};\n`
+    let styleDescription = "";
+    for (let cssId = 0; cssId < args.length; cssId++) {
+        if (!args[cssId].selector) {
+            continue;
+        }
+        styleDescription += `${args[cssId].selector} {\n`;
+        for (let i = 0; i < Object.keys(args[cssId]).length; i++) {
+            const property = Object.keys(args[cssId])[i];
+            if (property === "selector") {
+                continue;
+            }
+            const value = args[cssId][property];
+            styleDescription += `${property}: ${value};\n`;
+        }
+        styleDescription += '}\n\n';
     }
-    styleDescription += '}\n';
-
-    styleDescription += ' .defaultStyle p { \n'
-    for (let i = 0; i < Object.keys(defaultStyleP).length; i++) {
-        const property = Object.keys(defaultStyleP)[i];
-        const value = defaultStyleP[property]
-        styleDescription += `${property}: ${value};\n`
-    }
-    styleDescription += '}';
     style.innerHTML = styleDescription;
     return style;
 }
