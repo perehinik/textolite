@@ -90,6 +90,16 @@ export class Editor {
 
     /**
      * Returns main editor conntainer by id.
+     * 
+     * @returns html code of text inside sditor field.
+     */
+    getHTML(): string {
+        const rootNode = document.getElementById(this.editorDivId);
+        return `<div>${defaultStyleNode.outerHTML}${rootNode?.outerHTML}</div>`;
+    }
+
+    /**
+     * Returns main editor conntainer by id.
      * If element with such id doesn'e exist - creates new DIV element.
      * 
      * @param divId - Id of DIV element which should be used as container for editor.

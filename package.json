@@ -1,7 +1,20 @@
 {
   "name": "textolite",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "description": "Text editor.",
   "author": "Ivan Perehiniak <iv.perehinik@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/perehinik/textolite.git"
+  },
+  "maintainers": [
+    {
+      "name": "Ivan Perehihniak",
+      "email": "iv.perehinik@gmail.com",
+      "web": "https://www.linkedin.com/in/perehinik/"
+    }
+  ],
+  "license": "MIT",
   "directories": {
     "test": "tests"
   },
@@ -14,5 +27,12 @@
     "jest-environment-jsdom": "^29.6.2",
     "ts-jest": "^29.1.1",
     "typescript": "^5.1.6"
-  }
+  },
+  "keywords": [
+    "editor",
+    "text",
+    "rich",
+    "textolite",
+    "html"
+  ]
 }
