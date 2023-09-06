@@ -17,6 +17,7 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
     if (nd.nodeName === "BR") {return nd.cloneNode();}
     if (nd.childNodes.length === 0) {return;}
 
+    const resNd = nd.cloneNode() as HTMLElement;
     const ndStyle = getStyle(nd as HTMLElement);
     const ndStyleAbs = applyOverlappingStyle(parentStyle, ndStyle);
 
@@ -31,9 +32,9 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         const chNdReplace = optimizeNode(childNd, ndStyleAbs);
         if (!chNdReplace) {continue;}
         const chNdReplaceStyle = getStyle(chNdReplace as HTMLElement);
-        const nodeType = chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName;
+        const nodeType = (chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName).toUpperCase();
 
-        if (chNdReplace.nodeName === "BR" || chNdReplace.nodeType === Node.TEXT_NODE || chNdReplace.nodeName === "P" ) {
+        if (nodeType === "BR" || nodeType === "TEXT" || nodeType === "P" ) {
             res.push(chNdReplace);
             continue;
         }
@@ -51,16 +52,25 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         }
     }
 
-    // Optimize node list horizontally
     res = optimizeNodeList(res);
 
+    // Dont allow text nodes in DIV
+    if (nd.nodeName === "DIV") {
+        for (let i = 0; i < res.length; i++) {
+            if (res[i].nodeType === Node.TEXT_NODE) {
+                const replacement = document.createElement("P");
+                replacement.textContent = res[i].textContent;
+                res[i] = replacement;
+            }
+        }
+    }
+
     if (res.length === 0 && nd.nodeName !== "DIV" && nd.nodeName !== "P") {return;}
-    else if (res.length === 1 && nd.nodeName !== "DIV" && nd.nodeName !== "P") {
+    else if (res.length === 1 && nd.nodeName !== "DIV" && res[0].nodeName.toUpperCase() !== "P") {
         if (res[0].nodeName === "BR") {return res[0];}
-        if (res[0].nodeType === Node.TEXT_NODE && Object.keys(ndStyle).length === 0) {return res[0];}
+        if (res[0].nodeType === Node.TEXT_NODE && nd.nodeName !== "P" && Object.keys(ndStyle).length === 0) {return res[0];}
 
         const resStyle = getStyle(res[0] as HTMLElement);
-        const resNd = nd.cloneNode() as HTMLElement;
 
         if (res[0].nodeName === "SPAN") {
             while (res[0].childNodes.length > 0) {
@@ -78,7 +88,6 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         return resNd;        
     }
 
-    const resNd = nd.cloneNode() as HTMLElement;
     for (let i = 0; i < res.length; i++) {
         resNd.appendChild(res[i]);
     }
@@ -113,7 +122,7 @@ export function optimizeNodeList(ndList: Node[]): Node[] {
             }
             continue;
         }
-        if (lastAddedNode?.nodeName !== ndList[i]?.nodeName || ndList[i]?.nodeName === "P") {
+        if (lastAddedNode?.nodeName !== ndList[i]?.nodeName || ndList[i]?.nodeName === "P" || ndList[i]?.nodeName === "p") {
             res.push(ndList[i]);
             continue;
         }

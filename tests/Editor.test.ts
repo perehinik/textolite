@@ -4,6 +4,7 @@ import * as selectionAdjModule from "../src/SelectionAdj";
 import * as stylingModule from "../src/Styling";
 import * as optimiizeDOMModule from '../src/OptimizeDOM';
 import * as DOMToolsModule from '../src/DOMTools';
+import * as fontsModue from "../src/ToolsPanel/Inputs/Fonts";
 import { SelectionAdj } from "../src/SelectionAdj";
 import { CSSObj } from "../src/Styling";
 
@@ -30,6 +31,15 @@ const buildTree = () => {
     return {commonNd, nd1Span, nd2Span, nd1, nd2, nd3};
 }
 
+const getAvailableFontsMock = jest.spyOn(fontsModue, 'getAvailableFonts' as any);
+getAvailableFontsMock.mockImplementation(()=>{return ["Arial", "Times New Roman"]});
+const getAdjSelectionMock = jest.spyOn(selectionAdjModule, 'getAdjSelection' as any)
+const restoreSelectionSpy = jest.spyOn(selectionAdjModule, 'restoreSelection' as any);
+const getNestedStyleMock = jest.spyOn(stylingModule, 'getNestedStyle' as any);
+const setStyleMock = jest.spyOn(stylingModule, 'setStyle' as any);
+const optimizeNodeMock = jest.spyOn(optimiizeDOMModule, 'optimizeNode' as any);
+const getNodeHierarchyMock = jest.spyOn(DOMToolsModule, 'getNodeHierarchy' as any);
+
 const buildEditor = () => {
     const editorContainer = document.createElement("div");
     editorContainer.id = "editor-cont";
@@ -40,16 +50,10 @@ const buildEditor = () => {
     const editorP = editorDiv.childNodes.length > 0 ? editorDiv.childNodes[0] : document.createElement("p");
     const txtNd = editorP.childNodes.length > 0 ? editorP.childNodes[0] : document.createTextNode("");
     txtNd.textContent = "";
+    getAdjSelectionMock.mockReset();
 
     return {editor, editorDiv, editorP, txtNd};
 }
-
-const getAdjSelectionMock = jest.spyOn(selectionAdjModule, 'getAdjSelection' as any)
-const restoreSelectionSpy = jest.spyOn(selectionAdjModule, 'restoreSelection' as any);
-const getNestedStyleMock = jest.spyOn(stylingModule, 'getNestedStyle' as any);
-const setStyleMock = jest.spyOn(stylingModule, 'setStyle' as any);
-const optimizeNodeMock = jest.spyOn(optimiizeDOMModule, 'optimizeNode' as any);
-const getNodeHierarchyMock = jest.spyOn(DOMToolsModule, 'getNodeHierarchy' as any);
 
 afterEach(() => {
     let sel = document.getSelection();
@@ -69,13 +73,15 @@ describe('Testing constructor', () => {
 
         expect(editor.toolsDivId).toBe(editor.containerId + "-tools");
         expect(editor.editorDivId).toBe(editor.containerId + "-editor");
-        expect(editor.editorContainer.childNodes.length).toBe(3);
+        expect(editor.editorContainer.childNodes.length).toBe(4);
 
         const defaultStyleNd = editor.editorContainer.childNodes[0];
-        const toolsDivId = (editor.editorContainer.childNodes[1] as HTMLElement).id;
-        const eventDiv = (editor.editorContainer.childNodes[2] as HTMLElement);
+        const selectionStyleNd = editor.editorContainer.childNodes[1];
+        const toolsDivId = (editor.editorContainer.childNodes[2] as HTMLElement).id;
+        const eventDiv = (editor.editorContainer.childNodes[3] as HTMLElement);
         const editorDivId = (eventDiv.childNodes[0] as HTMLElement).id;
         expect(defaultStyleNd.nodeName).toBe("STYLE");
+        expect(selectionStyleNd.nodeName).toBe("STYLE");
         expect(toolsDivId).toBe(editor.toolsDivId);
         expect(editorDivId).toBe(editor.editorDivId);
     });

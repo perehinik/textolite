@@ -1,18 +1,23 @@
 import { CSSObj } from "../../src/Styling";
 import { Tools } from "../../src/ToolsPanel/Tools";
 import * as iconsModule from '../../src/ToolsPanel/icon/icons'
+import * as fontsModue from "../../src/ToolsPanel/Inputs/Fonts"
 
 const onStyleChange = jest.fn();
+const getAvailableFontsMock = jest.spyOn(fontsModue, 'getAvailableFonts' as any);
 
 const buildTools = () => {
+    getAvailableFontsMock.mockImplementation(()=>{return ["Arial", "Times New Roman"]});
     const toolsContainer = document.createElement("div");
     const tools = new Tools(toolsContainer, onStyleChange);
+    onStyleChange.mockReset();
 
     return {tools, toolsContainer, onStyleChange};
 }
 
 afterEach(() => {
     onStyleChange.mockReset();
+    getAvailableFontsMock.mockReset();
 });
 
 describe('Testing constructor', () => {
@@ -20,7 +25,7 @@ describe('Testing constructor', () => {
         const {tools, toolsContainer, onStyleChange} = buildTools();
 
         expect(tools.onStyleChange).toEqual(onStyleChange);
-        expect(toolsContainer.childNodes.length).toBe(6);
+        expect(toolsContainer.childNodes.length).toBe(8);
     });
 
     test('bold button', () => {
@@ -28,7 +33,7 @@ describe('Testing constructor', () => {
 
         expect(tools.boldButton.valueOn).toEqual({'font-weight': 'bold'});
         expect(tools.boldButton.valueOff).toEqual({'font-weight': 'normal'});
-        expect(tools.boldButton.Element.innerHTML).toEqual(iconsModule.bold);
+        expect(tools.boldButton.Element.firstChild?.nodeName.toUpperCase()).toEqual("SVG");
         expect(tools.boldButton.onStateChange).toEqual(tools.styleChanged);
     });
 
@@ -37,7 +42,7 @@ describe('Testing constructor', () => {
 
         expect(tools.italicButton.valueOn).toEqual({'font-style': 'italic'});
         expect(tools.italicButton.valueOff).toEqual({'font-style': 'normal'});
-        expect(tools.italicButton.Element.innerHTML).toEqual(iconsModule.italic);
+        expect(tools.italicButton.Element.firstChild?.nodeName.toUpperCase()).toEqual("SVG");
         expect(tools.italicButton.onStateChange).toEqual(tools.styleChanged);
     });
 
@@ -46,7 +51,7 @@ describe('Testing constructor', () => {
 
         expect(tools.underlineButton.valueOn).toEqual({'text-decoration': 'underline'});
         expect(tools.underlineButton.valueOff).toEqual({'text-decoration': 'none'});
-        expect(tools.underlineButton.Element.innerHTML).toEqual(iconsModule.underline);
+        expect(tools.underlineButton.Element.firstChild?.nodeName.toUpperCase()).toEqual("SVG");
         expect(tools.underlineButton.onStateChange).toEqual(tools.styleChanged);
     });
 });

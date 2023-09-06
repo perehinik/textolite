@@ -16,7 +16,7 @@ export class DropDownArrow {
     dropDownContainer: HTMLDivElement;
     dropDownWidth: number = 0;
     hideDropDownOnClick: boolean = true;
-    button: HTMLDivElement;
+    arrowButton: HTMLDivElement;
     dropdownLeft: number = 0;
 
     /**
@@ -27,11 +27,11 @@ export class DropDownArrow {
     constructor(onStateChange: Function) {
         this.onStateChange = onStateChange;
         this.Element = this.buildElement();
-        this.button = this.buildButton();
+        this.arrowButton = this.buildButton();
         this.dropDownAnchor = this.buildDropDownAnchor();
         this.dropDownContainer = this.buildDropDownContainer();
 
-        this.Element.appendChild(this.button);
+        this.Element.appendChild(this.arrowButton);
         this.Element.appendChild(this.dropDownAnchor);
         this.dropDownAnchor.appendChild(this.dropDownContainer);
         
@@ -133,6 +133,7 @@ export class DropDownArrow {
         dropDownContainer.style.zIndex = "3422";
         dropDownContainer.style.position = "absolute";
         dropDownContainer.style.border = "1px solid gray";
+        dropDownContainer.style.boxShadow = "3px 3px 4px rgb(220, 220, 220)";
         dropDownContainer.style.display = "null";
         return dropDownContainer;
     }

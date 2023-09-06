@@ -75,8 +75,8 @@ export class Editor {
         updateNodeStyle(editorNd, defaultStyle);
 
         const rootP: HTMLElement = document.createElement("P");
-        rootP.textContent = "Hello World! I'm just a simple text editor.";
         editorNd.appendChild(rootP);
+        rootP.textContent = "\u200b ";
         
         this.editorContainer.appendChild(defaultStyleNode);
         this.editorContainer.appendChild(selectionStyleNode);

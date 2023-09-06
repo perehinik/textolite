@@ -30,6 +30,8 @@ describe('Testing optimization of simplest nodes', () => {
         nd.appendChild(ndTxt);
         const res = optimizeNode(nd);
         expect(res?.nodeName).toBe("DIV");
+        // Text node in div replaced with paagraph
+        expect(res?.firstChild?.nodeName).toBe("P");
         expect(res?.textContent).toBe("testText");
     });
 });

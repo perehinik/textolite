@@ -18,6 +18,8 @@ export const defaultStyle: CSSObj = {
     'text-decoration': 'none',
     'letter-spacing': '0px',
     'line-height': '1.2',
+    'font-family': 'Arial',
+    'font-size': '12pt'
     //'vertical-align': 'sub'/'super'
 }
 

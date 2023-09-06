@@ -43,6 +43,7 @@ export class AlignPanel{
     constructor(onStateChange: Function) {
         this.Element = document.createElement("div");
         this.Element.style.display = "inline-block";
+        this.Element.style.minWidth = "128px";
         this.onStateChange = onStateChange;
         
         this.onClickHandler = this.onClickHandler.bind(this);

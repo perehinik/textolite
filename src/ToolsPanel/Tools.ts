@@ -9,6 +9,8 @@ import { TextColorButton } from './Inputs/TextColorButton';
 import { boldIcon, italicIcon, strikethroughIcon, underlineIcon } from './icon/icons'
 import { CSSObj, applyOverlappingStyle, defaultStyle } from '../Styling';
 import { TextBkGndColorButton } from './Inputs/TextBkGndColorButton';
+import { FontDropDown } from './Inputs/FontDropDown';
+import { FontSizeDropDown } from './Inputs/FontSizeDropDown';
 
 /**
  * Class implements editor toolbox functionality.
@@ -22,6 +24,8 @@ export class Tools {
     alignPanel: AlignPanel;
     fontColorButton: TextColorButton;
     fontBgColorButton: TextBkGndColorButton;
+    fontSelector: FontDropDown;
+    fontSizeSelector: FontSizeDropDown;
     
     /**
      * Toolbox constructor.
@@ -34,8 +38,8 @@ export class Tools {
         if (toolsDivNd){toolsDivNd.innerHTML = '';}
 
         this.styleChanged = this.styleChanged.bind(this);
-        toolsDivNd.style.height = '25px';
         toolsDivNd.style.display = 'flex';
+        toolsDivNd.style.flexWrap = 'wrap';
         toolsDivNd.style.alignItems = "center";
         toolsDivNd.style.paddingBottom = '2px';
 
@@ -56,16 +60,24 @@ export class Tools {
         this.alignPanel = new AlignPanel(this.styleChanged);
         toolsDivNd.appendChild(this.alignPanel.Element);
 
-        toolsDivNd.appendChild(this.creteSplitter());
-
         // BUILD COLOR PANEL
+        const colorTools = document.createElement("div");
+        colorTools.style.display = "flex";
+        colorTools.appendChild(this.creteSplitter());
         this.fontColorButton = new TextColorButton(this.styleChanged);
-        toolsDivNd.appendChild(this.fontColorButton.Element);
-
+        colorTools.appendChild(this.fontColorButton.Element);
         this.fontBgColorButton = new TextBkGndColorButton(this.styleChanged);
-        toolsDivNd.appendChild(this.fontBgColorButton.Element);
+        colorTools.appendChild(this.fontBgColorButton.Element);
+        toolsDivNd.appendChild(colorTools);
 
-        toolsDivNd.appendChild(this.creteSplitter());
+        const fontTools = document.createElement("div");
+        fontTools.style.display = "flex";
+        fontTools.appendChild(this.creteSplitter());
+        this.fontSizeSelector = new FontSizeDropDown(this.styleChanged)
+        fontTools.appendChild(this.fontSizeSelector.Element);
+        this.fontSelector = new FontDropDown(this.styleChanged);
+        fontTools.appendChild(this.fontSelector.Element);
+        toolsDivNd.appendChild(fontTools);
     }
 
     /**
@@ -113,5 +125,7 @@ export class Tools {
         this.underlineButton.setState(underline);
         this.strikethroughButton.setState(strikethrough);
         this.alignPanel.setStateByStyle(style);
+        this.fontSelector.setStateByStyle(style);
+        this.fontSizeSelector.setStateByStyle(style);
     }
 }

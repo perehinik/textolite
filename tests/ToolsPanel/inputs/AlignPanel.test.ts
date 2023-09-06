@@ -1,5 +1,5 @@
 import { AlignPanel, alignState } from "../../../src/ToolsPanel/Inputs/AlignPanel";
-import { alignLeft, alignCenter, alignRight, alignJustify } from "../../../src/ToolsPanel/icon/icons";
+import { alignLeftIcon, alignCenterIcon, alignRightIcon, alignJustifyIcon } from "../../../src/ToolsPanel/icon/icons";
 
 const styleChangedMock = jest.fn().mockImplementation(() => {});
 
@@ -28,10 +28,10 @@ describe('Testing constructor', () => {
 
         expect(alPanel.Element.nodeName).toBe("DIV");
         expect(alPanel.Element.childNodes.length).toBe(4);
-        expect((alPanel.Element.childNodes[0] as HTMLElement).innerHTML).toEqual(alignLeft);
-        expect((alPanel.Element.childNodes[1] as HTMLElement).innerHTML).toEqual(alignCenter);
-        expect((alPanel.Element.childNodes[2] as HTMLElement).innerHTML).toEqual(alignRight);
-        expect((alPanel.Element.childNodes[3] as HTMLElement).innerHTML).toEqual(alignJustify);
+        expect((alPanel.Element.childNodes[0].firstChild as HTMLElement).nodeName.toUpperCase()).toEqual("SVG");
+        expect((alPanel.Element.childNodes[1].firstChild as HTMLElement).nodeName.toUpperCase()).toEqual("SVG");
+        expect((alPanel.Element.childNodes[2].firstChild as HTMLElement).nodeName.toUpperCase()).toEqual("SVG");
+        expect((alPanel.Element.childNodes[3].firstChild as HTMLElement).nodeName.toUpperCase()).toEqual("SVG");
         expect(alPanel.state).toBe(0);
         expect(alPanel.onStateChange).toEqual(styleChangedMock);
     });
@@ -41,9 +41,9 @@ describe('Testing createButton', () => {
     test('', () => {
         const alPanel = buildAlignPanel();
         const cb = jest.fn();
-        const btn = alPanel.createButton(alignLeft, alignState.Left);
+        const btn = alPanel.createButton(alignLeftIcon, alignState.Left);
         expect(btn.nodeName).toBe("BUTTON");
-        expect((btn as HTMLElement).innerHTML).toEqual(alignLeft);
+        expect((btn.firstChild as HTMLElement).nodeName.toUpperCase()).toEqual("SVG");
     });
 });
 

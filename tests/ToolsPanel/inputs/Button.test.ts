@@ -1,10 +1,10 @@
 import { Button } from "../../../src/ToolsPanel/Inputs/Button";
-import { bold } from "../../../src/ToolsPanel/icon/icons";
+import { boldIcon } from "../../../src/ToolsPanel/icon/icons";
 
 const styleChangedMock = jest.fn().mockImplementation(() => {});
 
 const buildButton = () => {
-    return new Button(bold, {"state": "ON"}, {"state": "OFF"}, styleChangedMock);
+    return new Button(boldIcon, {"state": "ON"}, {"state": "OFF"}, styleChangedMock);
 }
 
 afterEach(() => {
