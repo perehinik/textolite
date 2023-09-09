@@ -4,6 +4,7 @@
  */
 
 import { buildSVG } from "../Icons";
+import { CSSObj } from "../../Styling";
 
 /**
  * Class implements editor toolbox button functionality.
@@ -11,9 +12,9 @@ import { buildSVG } from "../Icons";
 export class Button {
     state: boolean = false;
     Element: HTMLButtonElement;
-    valueOn: object;
-    valueOff: object;
-    onStateChange: Function;
+    valueOn: CSSObj;
+    valueOff: CSSObj;
+    onStateChange: (state: CSSObj) => void;
 
     /**
      * Toolbox button constructor.
@@ -23,7 +24,7 @@ export class Button {
      * @param valueOff - Value for OFF state of button.
      * @param onStateChange - Callback for button state update.
      */
-    constructor(icon: string, valueOn: object, valueOff: object, onStateChange: Function) {
+    constructor(icon: string, valueOn: CSSObj, valueOff: CSSObj, onStateChange: (state: CSSObj) => void) {
         this.onStateChange = onStateChange;
         this.Element = this.buildElement();
         this.valueOn = valueOn;
@@ -62,6 +63,7 @@ export class Button {
      *
      * @param ev - Mouse event.
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onClickHandler(ev?: MouseEvent) {
         this.setState(!this.state);
         if (this.onStateChange) {

@@ -49,7 +49,7 @@ export function getChildNodeByIndex(nd: Node, index: number): Position {
  * @returns List of nodes representing hierarchy from `rootNode` to `nd`.
  */
 export function getNodeHierarchy(nd: Node, rootNode: Node): Node[] {
-    let nodeHierarchy: Node[] = [nd] 
+    const nodeHierarchy: Node[] = [nd] 
     while(nd.parentNode && !nd.isSameNode(rootNode)) {
         nd = nd.parentNode;
         nodeHierarchy.push(nd);

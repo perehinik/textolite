@@ -1,0 +1,26 @@
+name: Textolite
+
+on: [push]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up NPM
+      uses: actions/setup-node@v3
+      with:
+        node-version: "18.16.0"
+
+    - name: Install dependencies
+      run: |
+        npm install
+
+    - name: Static tests
+      run: |
+        npx eslint .
+
+    - name: Unit/integreation tests
+      run: |
+        npm test . -- --coverage

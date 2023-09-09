@@ -176,6 +176,7 @@ export class Editor {
      * 
      * @param ev - Mouse event, optional.
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     selectionChanged(ev?: MouseEvent) {
         this.updateToolboxStyleFromSelection();
     }
@@ -212,7 +213,7 @@ export class Editor {
      */
     setStyleFromObj(newStyle: CSSObj): void {
         const rootNode = document.getElementById(this.editorDivId) as Node;
-        let selAdj = getAdjSelection(true, rootNode);
+        const selAdj = getAdjSelection(true, rootNode);
         if (!selAdj || !newStyle || !selAdj.startNode) {return;}
         newStyle = this.setAlignment(selAdj, newStyle);
         if (!newStyle || Object.keys(newStyle).length === 0) {return;}  
@@ -242,7 +243,6 @@ export class Editor {
         const startAligningNode = startHierarchy[1];
         const endAligningNode = endHierarchy[1];
         let startFound = false;
-        const nodeList: Node[] = [];
         for (let i = 0; i < rootNode.childNodes.length; i ++) {
             const iNode = rootNode.childNodes[i] as HTMLElement
             if (!startFound && iNode === startAligningNode) {startFound = true;}

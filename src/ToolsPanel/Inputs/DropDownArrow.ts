@@ -11,7 +11,7 @@ import { buildSVG, arrowDownIcon } from "../Icons";
 export class DropDownArrow {
     state: boolean = false;
     Element: HTMLDivElement;
-    onStateChange: Function;
+    onStateChange: (state: boolean) => void;
     dropDownAnchor: HTMLDivElement;
     dropDownContainer: HTMLDivElement;
     dropDownWidth: number = 0;
@@ -24,7 +24,7 @@ export class DropDownArrow {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (state: boolean) => void) {
         this.onStateChange = onStateChange;
         this.Element = this.buildElement();
         this.arrowButton = this.buildButton();
@@ -73,7 +73,9 @@ export class DropDownArrow {
      */
     onDropDownMouseEvent(ev: MouseEvent | TouchEvent): void {
         if (!this.hideDropDownOnClick) {
-            if (!(ev.target as Node)?.nodeName || (ev.target as Node)?.nodeName !== "INPUT") {ev.preventDefault()};
+            if (!(ev.target as Node)?.nodeName || (ev.target as Node)?.nodeName !== "INPUT") {
+                ev.preventDefault()
+            }
             ev.stopPropagation();
         }
     }
@@ -155,6 +157,7 @@ export class DropDownArrow {
      *
      * @param ev - Mouse event.
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onDocClickHandler(ev?: MouseEvent): void {
         if (this.state) {
             this.setState(false);

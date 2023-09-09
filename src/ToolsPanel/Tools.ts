@@ -16,7 +16,7 @@ import { FontSizeDropDown } from './Inputs/FontSizeDropDown';
  * Class implements editor toolbox functionality.
  */
 export class Tools {
-    onStyleChange: Function;
+    onStyleChange: (style: CSSObj) => void;
     boldButton: Button;
     italicButton: Button;
     underlineButton: Button;
@@ -33,7 +33,7 @@ export class Tools {
      * @param toolsDivNd - Node that shuld be used as container for toolbox.
      * @param onStyleChange - Callback, changes style of the selected areea in editor.
      */
-    constructor(toolsDivNd: HTMLDivElement, onStyleChange: Function) {
+    constructor(toolsDivNd: HTMLDivElement, onStyleChange: (style: CSSObj) => void) {
         this.onStyleChange = onStyleChange;
         if (toolsDivNd){toolsDivNd.innerHTML = '';}
 
@@ -85,7 +85,7 @@ export class Tools {
      *
      * @param newStyle - New style state of toolbox input.
      */
-    styleChanged(newStyle: object): void {
+    styleChanged(newStyle: CSSObj): void {
         if (this.onStyleChange) {
             this.onStyleChange(newStyle);
         }

@@ -33,14 +33,14 @@ export class AlignPanel{
     centerAlignButton: HTMLButtonElement;
     rightAlignButton: HTMLButtonElement;
     justifyAlignButton: HTMLButtonElement;
-    onStateChange: Function;
+    onStateChange: (style: CSSObj) => void;
 
     /**
      * Alignment panel constructor.
      *
      * @param onStateChange - Callback for alignment update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (style: CSSObj) => void) {
         this.Element = document.createElement("div");
         this.Element.style.display = "inline-block";
         this.Element.style.minWidth = "128px";
@@ -86,7 +86,7 @@ export class AlignPanel{
     onClickHandler(state: number): void {
         if(state === this.state) {return;}
         this.setState(state);
-        let style = this.getStyleByState(state);
+        const style = this.getStyleByState(state);
 
         if (this.onStateChange) {
             this.onStateChange(style);

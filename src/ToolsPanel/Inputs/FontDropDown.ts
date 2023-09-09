@@ -33,7 +33,7 @@ const fontButtonStyleNode = buildStyleNode(fontButtonStyle, fontButtonnStyleHove
  * Class implements button for changing text font.
  */
 export class FontDropDown extends DropDownButton {
-    onStateChange: Function;
+    onStateChange: (state: CSSObj) => void;
     availableFonts: string[];
     currentFont: string = "";
     fontWidget: HTMLDivElement;
@@ -48,7 +48,7 @@ export class FontDropDown extends DropDownButton {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (state: CSSObj) => void) {
         super();
         this.onStateChange = onStateChange;
         this.fontChanged = this.fontChanged.bind(this);
