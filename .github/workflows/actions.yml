@@ -23,4 +23,4 @@ jobs:
 
     - name: Unit/integreation tests
       run: |
-        npm test .
+        npm test . -- --coverage
