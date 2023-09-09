@@ -14,7 +14,7 @@ export class ColorPanel {
     Element: HTMLDivElement;
     buttons: HTMLDivElement[] = [];
     usedColorsButtons: HTMLDivElement[] = [];
-    onStateChange: Function;
+    onStateChange: (colorStr: string) => void;
     colors: Color[];
     usedColors: Color[] = [];
     usedColorId: number = 0;
@@ -26,7 +26,7 @@ export class ColorPanel {
      *
      * @param onStateChange - Callback for alignment update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (colorStr: string) => void) {
         this.onStateChange = onStateChange;
         this.Element = this.buildElement();
         this.colors = getColors();
@@ -82,7 +82,7 @@ export class ColorPanel {
      * @param onClick - Callback for button click.
      * @returns - Single button element.
      */
-    buildButton(colorId: number, color: Color, onClick: Function): HTMLDivElement {
+    buildButton(colorId: number, color: Color, onClick: (colorId: number, color: Color) => void): HTMLDivElement {
         const button = document.createElement("div");
         button.style.display = "inline-block";
         button.style.margin = "2px 2px";
@@ -389,7 +389,7 @@ function extractNumbers(str: string): number[] {
  * @returns - Color object.
  */
 function getBestMatchColor(color: Color): Color{
-    let {R, G, B} = color;
+    const {R, G, B} = color;
     // R/G/B components are the same so it's one of grey shades.
     if (R === G && G === B) {return {...standartColors[standartColors.length - 1]};}
     let bestMatchId = 0;
@@ -399,13 +399,13 @@ function getBestMatchColor(color: Color): Color{
         let diff = 256;
         const coefs: number[] = [];
         if (stCol.R >= R && stCol.G >= G && stCol.B >= B) {
-            if (stCol.R !== R) {coefs.push((stCol.R - R) / stCol.R)};
-            if (stCol.G !== G) {coefs.push((stCol.G - G) / stCol.G)};
-            if (stCol.B !== B) {coefs.push((stCol.B - B) / stCol.B)};
+            if (stCol.R !== R) {coefs.push((stCol.R - R) / stCol.R)}
+            if (stCol.G !== G) {coefs.push((stCol.G - G) / stCol.G)}
+            if (stCol.B !== B) {coefs.push((stCol.B - B) / stCol.B)}
         } else if (stCol.R <= R && stCol.G <= G && stCol.B <= B) {
-            if (stCol.R !== 256 && stCol.R !== R) {coefs.push((R - stCol.R) / (255.1 - stCol.R))};
-            if (stCol.G !== 256 && stCol.G !== G) {coefs.push((G - stCol.G) / (255.1- stCol.G))};
-            if (stCol.B !== 256 && stCol.B !== B) {coefs.push((B - stCol.B) / (255.1 - stCol.B))};
+            if (stCol.R !== 256 && stCol.R !== R) {coefs.push((R - stCol.R) / (255.1 - stCol.R))}
+            if (stCol.G !== 256 && stCol.G !== G) {coefs.push((G - stCol.G) / (255.1- stCol.G))}
+            if (stCol.B !== 256 && stCol.B !== B) {coefs.push((B - stCol.B) / (255.1 - stCol.B))}
         }
         // No need to proceed farther, this is the exact color.
         if (coefs.length === 0) {return {...standartColors[i]};}

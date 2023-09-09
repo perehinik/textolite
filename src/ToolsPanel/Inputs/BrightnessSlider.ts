@@ -12,7 +12,7 @@ import { brightnessIcon, buildSVG } from "../Icons";
 export class BrightnessSlider{
     private value: number = 0;
     Element: HTMLDivElement;
-    onStateChange: Function;
+    onStateChange: (value: number) => void;
     valueBox: HTMLDivElement;
     slider: RangeSlider;
 
@@ -21,7 +21,7 @@ export class BrightnessSlider{
      *
      * @param onStateChange - Callback for brightness update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (value: number) => void) {
         this.onStateChange = onStateChange;
         this.sliderValueChanged = this.sliderValueChanged.bind(this);
 

@@ -43,7 +43,7 @@ export class DropDownButton {
         this.Element = this.buildElement();
         this.button = this.buildButton();
 
-        this.dropDownArrow = new DropDownArrow(this.arrowStateChanged);
+        this.dropDownArrow = new DropDownArrow(() => {});
         this.Element.appendChild(this.button);
         this.Element.appendChild(this.dropDownArrow.Element);
 
@@ -55,7 +55,6 @@ export class DropDownButton {
      */
     connectEventHandlers(): void {
         this.onClickHandler = this.onClickHandler.bind(this);
-        this.arrowStateChanged = this.arrowStateChanged.bind(this);
         this.Element.onmousedown = (ev) => {
             ev.preventDefault();
             ev.stopPropagation();
@@ -104,14 +103,5 @@ export class DropDownButton {
     onClickHandler(ev: MouseEvent): void {
         ev.stopPropagation();
         ev.preventDefault();
-    }
-
-    /**
-     * Calback for arrov state change event.
-     *
-     * @param newState - new dropdown state.
-     */
-    arrowStateChanged(newState: boolean): void {
-
     }
 }

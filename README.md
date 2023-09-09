@@ -6,7 +6,7 @@ Textolite is a simle text editor.
 
 ## Using
 
-In order to install package use  ```npm iinstall textolite``` .
+In order to install package use  ```npm install textolite``` .
 
 ```JavaScript
 import { Editor } from 'textolite';
@@ -31,5 +31,6 @@ In order to run exemple:
 
 ## Running tests
 
-In order to run tests run ```npm test```.<br/>
-In order to show coverage details use *coverage* option: ```npm test -- --coverage```.
+Running unit/integration tests: ```npm test```<br/>
+Running unit/integration tests with coverage details: ```npm test -- --coverage```<br/>
+Checking formatting: ```npx eslint .``` or ```npm run lint .``` <br/>

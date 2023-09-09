@@ -59,10 +59,10 @@ export const tableIcon : string = '<svg xmlns="http://www.w3.org/2000/svg" viewB
  * @returns - HTML element with svg image.
  */
 export function buildSVG(svg: string, width?: string, height?: string): HTMLElement {
-    var div = document.createElement('div');
+    const div = document.createElement('div');
     div.innerHTML = svg;
     const svgImg = div.firstChild ? (div.firstChild as HTMLElement) : document.createElement('svg');
-    if (width) { svgImg.style.width = width };
-    if (height) { svgImg.style.height = height };
+    if (width) { svgImg.style.width = width }
+    if (height) { svgImg.style.height = height }
     return svgImg;
 }

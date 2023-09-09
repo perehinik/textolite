@@ -1,4 +1,6 @@
+import { Editor } from './dist/Editor.js'
+
 module.exports =
 {
-  Editor: require('./dist/Editor.js').Editor
+  Editor: Editor
 };

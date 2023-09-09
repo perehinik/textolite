@@ -47,7 +47,7 @@ export type SelectionAdj = {
  * @returns Adjusted selection.
  */
 export function getAdjSelection(splitNodes: boolean, rootNode: Node): SelectionAdj | undefined {
-    let sel = window.getSelection();
+    const sel = window.getSelection();
     if (!sel || !sel.anchorNode || !sel.focusNode || !rootNode) {return;}
 
     const selIsOneNode = sel.anchorNode.isSameNode(sel.focusNode);
@@ -118,7 +118,7 @@ export function setSelection(startNd: Node, startOffset: number, endNd: Node, en
     // Limit offsets to node text length.
     startOffset = Math.min(Math.max(startOffset, 0), startNd.textContent.length);
     endOffset = Math.min(Math.max(endOffset, 0), endNd.textContent.length);
-    let sel = window.getSelection();
+    const sel = window.getSelection();
     const selRange = document.createRange();
     selRange.setStart(startNd, startOffset);
     selRange.setEnd(endNd, endOffset);
@@ -150,19 +150,21 @@ function fixSelectionEnd(sel: SelectionAdj): SelectionAdj {
  * @param nd - Node with offset.
  * @param offset - Offset from start of `nd`.
  * @param rootNode - Base node for returned offset.
- * @returns Reelative position of offset in node `nd` relating to start of rootNode.
+ * @returns Relative position of offset in node `nd` relating to start of rootNode.
  */
 function getIndex(nd: Node | null, offset: number, rootNode: Node) : number | undefined {
-    if (!nd?.parentElement ) {return;};
+    if (!nd?.parentElement ) {return;}
     let currentNode = nd;
     let index = 0;
     let prevNode : Node;
-    let content = [];
+    const content = [];
 
-    while (true) {
+    let maxDepth = 1000;
+    while (maxDepth > 0) {
+        maxDepth --;
         prevNode = currentNode
         currentNode = currentNode.parentNode as Node;
-        let nodeList = currentNode.childNodes;
+        const nodeList = currentNode.childNodes;
 
         for (let i = 0; i < nodeList.length; i++) {
             const childNode = nodeList[i];
@@ -186,6 +188,7 @@ function getIndex(nd: Node | null, offset: number, rootNode: Node) : number | un
             return index;
         }
     }
+    return 0;
 }
 
 /**
@@ -245,8 +248,8 @@ function limitSelectionToNode(selAdj: SelectionAdj, limitNode: Node): SelectionA
         //if (selIsOneNode && sel.anchorOffset === sel.focusOffset) {return;}
         let commonNode = selAdj.startNode.parentNode ? selAdj.startNode.parentNode : selAdj.startNode;
         if (!selIsOneNode) {
-            let anchorHierarchy = getNodeHierarchy(selAdj.startNode, limitNode);
-            let focusHierarchy = getNodeHierarchy(selAdj.endNode, limitNode);
+            const anchorHierarchy = getNodeHierarchy(selAdj.startNode, limitNode);
+            const focusHierarchy = getNodeHierarchy(selAdj.endNode, limitNode);
             commonNode = getCommonNode(anchorHierarchy, focusHierarchy);
         }
         selAdj.commonNode = commonNode;
@@ -298,7 +301,7 @@ function splitStart(nd: Node, offset: number): Node {
     if (!nd.textContent || offset === 0) {return nd;}
     const textContent = nd.textContent;
     //1. create span replacement
-    let ndInsert = document.createElement("span");
+    const ndInsert = document.createElement("span");
     const ndText = document.createTextNode("");
     ndInsert.appendChild(ndText);
     //2. remove first part from original

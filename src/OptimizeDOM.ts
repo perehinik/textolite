@@ -32,7 +32,7 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         const chNdReplace = optimizeNode(childNd, ndStyleAbs);
         if (!chNdReplace) {continue;}
         const chNdReplaceStyle = getStyle(chNdReplace as HTMLElement);
-        const nodeType = (chNdReplace?.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace?.nodeName).toUpperCase();
+        const nodeType = (chNdReplace.nodeType === Node.TEXT_NODE ? "TEXT" : chNdReplace.nodeName).toUpperCase();
 
         if (nodeType === "BR" || nodeType === "TEXT" || nodeType === "P" ) {
             res.push(chNdReplace);
@@ -81,7 +81,7 @@ export function optimizeNode(nd: Node, parentStyle?: CSSObj): Node | undefined {
         }
 
         if (resNd.style != undefined) {
-            for(let key in resStyle) {
+            for(const key in resStyle) {
                 resNd.style.setProperty(key, resStyle[key]);
             }
         }
@@ -104,7 +104,7 @@ export function optimizeNodeList(ndList: Node[]): Node[] {
     const res: Node[] = [];
 
     for (let i = 0; i < ndList.length; i++) {
-        if (!ndList[i]?.nodeName) {continue;};
+        if (!ndList[i]?.nodeName) {continue;}
         if (i === 0) {
             res.push(ndList[i]);
             continue;

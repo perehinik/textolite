@@ -10,7 +10,7 @@ import { CSSObj, buildStyleNode } from "../../Styling";
  */
 export class RangeSlider{
     Element: HTMLInputElement;
-    onStateChange: Function;
+    onStateChange: (position: number) => void;
     eventEnabled: boolean = true;
     value: number;
 
@@ -23,7 +23,7 @@ export class RangeSlider{
      * @param value - Initial slider value.
      * @param onStateChange - Callback for slider position update.
      */
-    constructor(min: number, max: number, step: number, value: number, onStateChange: Function) {
+    constructor(min: number, max: number, step: number, value: number, onStateChange: (position: number) => void) {
         this.Element = document.createElement("input");
         this.Element.type = "range";
         this.Element.min = `${min}`;
@@ -37,7 +37,6 @@ export class RangeSlider{
         this.Element.addEventListener("input", this.valueChanged);
         this.value = 0;
         this.Element.appendChild(styleNode);
-        this.Element = this.Element;
         this.onStateChange = onStateChange;
     }
 

@@ -6,15 +6,13 @@
 import { buildSVG, fontFamilyIcon } from "../Icons";
 import { ColorPanel } from "./ColorPanel";
 import { DropDownButton } from "./DropDownButton";
-
-
-
+import { CSSObj } from "../../Styling";
 
 /**
  * Class implements editor toolbox button functionality.
  */
 export class TextColorButton extends DropDownButton {
-    onStateChange: Function;
+    onStateChange: (style: CSSObj) => void;
     colorPan: ColorPanel;
     colorStripe: HTMLDivElement;
 
@@ -23,7 +21,7 @@ export class TextColorButton extends DropDownButton {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (style: CSSObj) => void) {
         super();
         this.onStateChange = onStateChange;
         this.colorChanged = this.colorChanged.bind(this);

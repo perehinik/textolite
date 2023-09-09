@@ -252,4 +252,4 @@ export function getAvailableFonts(): string[] {
         }
     }
     return fontAvailable;
-};
+}
