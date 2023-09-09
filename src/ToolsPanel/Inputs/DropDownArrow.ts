@@ -3,7 +3,7 @@
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
-import { buildSVG, arrowDownIcon } from "../icon/icons";
+import { buildSVG, arrowDownIcon } from "../Icons";
 
 /**
  * Class implements arrow button used in dropdown menu.

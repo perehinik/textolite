@@ -1,5 +1,5 @@
 import { Button } from "../../../src/ToolsPanel/Inputs/Button";
-import { boldIcon } from "../../../src/ToolsPanel/icon/icons";
+import { boldIcon } from "../../../src/ToolsPanel/Icons";
 
 const styleChangedMock = jest.fn().mockImplementation(() => {});
 

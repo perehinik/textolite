@@ -6,7 +6,7 @@
 import { Button } from './Inputs/Button';
 import { AlignPanel } from './Inputs/AlignPanel';
 import { TextColorButton } from './Inputs/TextColorButton';
-import { boldIcon, italicIcon, strikethroughIcon, underlineIcon } from './icon/icons'
+import { boldIcon, italicIcon, strikethroughIcon, underlineIcon } from './Icons'
 import { CSSObj, applyOverlappingStyle, defaultStyle } from '../Styling';
 import { TextBkGndColorButton } from './Inputs/TextBkGndColorButton';
 import { FontDropDown } from './Inputs/FontDropDown';

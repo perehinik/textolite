@@ -4,7 +4,7 @@
  */
 
 import { RangeSlider } from "./Slider";
-import { brightnessIcon, buildSVG } from "../icon/icons";
+import { brightnessIcon, buildSVG } from "../Icons";
 
 /**
  * Class implements slider with srightness icon.

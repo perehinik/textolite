@@ -3,7 +3,7 @@
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
-import { buildSVG } from "../icon/icons";
+import { buildSVG } from "../Icons";
 
 /**
  * Class implements editor toolbox button functionality.

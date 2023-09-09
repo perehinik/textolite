@@ -1,5 +1,5 @@
 import { AlignPanel, alignState } from "../../../src/ToolsPanel/Inputs/AlignPanel";
-import { alignLeftIcon, alignCenterIcon, alignRightIcon, alignJustifyIcon } from "../../../src/ToolsPanel/icon/icons";
+import { alignLeftIcon, alignCenterIcon, alignRightIcon, alignJustifyIcon } from "../../../src/ToolsPanel/Icons";
 
 const styleChangedMock = jest.fn().mockImplementation(() => {});
 

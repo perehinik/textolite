@@ -10,7 +10,7 @@ import {
     alignRightIcon, 
     alignJustifyIcon, 
     buildSVG 
-} from "../icon/icons";
+} from "../Icons";
 
 /**
  * Enumerator for all possible alignment states.

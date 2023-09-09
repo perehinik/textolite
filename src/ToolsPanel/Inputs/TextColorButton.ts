@@ -3,7 +3,7 @@
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
-import { buildSVG, fontFamilyIcon } from "../icon/icons";
+import { buildSVG, fontFamilyIcon } from "../Icons";
 import { ColorPanel } from "./ColorPanel";
 import { DropDownButton } from "./DropDownButton";
 
