@@ -11,5 +11,5 @@
         "amd": true,
         "node": true
     },
-    "ignorePatterns": ["tests/", "dist/", "example/", "example/src/"]
+    "ignorePatterns": ["tests/", "dist/", "examples/"]
 }
