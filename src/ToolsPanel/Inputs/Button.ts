@@ -51,7 +51,9 @@ export class Button {
      */
     buildElement(): HTMLButtonElement {
         const element = document.createElement("button");
-        element.style.display = "inline-block";
+        element.style.display = "inline-flex";
+        element.style.alignItems = "center";
+        element.style.height = "25px";
         element.style.border = "none";
         element.style.padding = "none";
         element.style.backgroundColor = "transparent";
