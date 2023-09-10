@@ -12,6 +12,7 @@ npm i textolite
 ```
 
 Then you can use it in your project:
+
 ```html
 <div id="editor-container"></div>
 ```
@@ -39,7 +40,7 @@ Checking formatting: ```npx eslint .``` or ```npm run lint .``` <br/>
 ## Example
 
 There are 2 exemples. One uses React, second is just Vanilla JS.
-Examples were ment to be used with local version of ```textolite``` library, but you can also use latest released version.
+Examples were meant to be used with local version of ```textolite``` library, but you can also use latest released version.
 
 ### Using latest released version of textolite library:
 
