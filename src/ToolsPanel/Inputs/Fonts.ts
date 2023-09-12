@@ -251,7 +251,7 @@ export function getAvailableFonts(): string[] {
             const div = document.createElement("div");
             div.style.fontFamily = font;
             const actualFont = div.style.fontFamily;
-            const actualFontFormat = actualFont.replaceAll('\"', '')
+            const actualFontFormat = actualFont.replaceAll('"', '')
             if (!fontAvailable.includes(actualFont) && !fontAvailable.includes(actualFontFormat)) {
                 fontAvailable.push(actualFont);
             }
