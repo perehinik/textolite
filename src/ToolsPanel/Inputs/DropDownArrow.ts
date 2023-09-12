@@ -56,16 +56,11 @@ export class DropDownArrow {
         this.onDocClickHandler = this.onDocClickHandler.bind(this);
         this.onDropDownMouseEvent = this.onDropDownMouseEvent.bind(this);
 
-        this.Element.onmousedown = (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-        };
-        this.Element.addEventListener("click", this.onClickHandler, false);
+        this.arrowButton.onmousedown = (ev) => {ev.preventDefault();};
+        this.arrowButton.addEventListener("click", this.onClickHandler, false);
+        this.Element.onmousedown = this.onDropDownMouseEvent;
         document.addEventListener("click", this.onDocClickHandler, false);
-        
         this.dropDownContainer.addEventListener("click", this.onDropDownMouseEvent, false)
-        this.dropDownContainer.addEventListener("mousedown", this.onDropDownMouseEvent, false)
-        this.dropDownContainer.addEventListener("touchstart", this.onDropDownMouseEvent, false)
     }
 
     /**
@@ -146,9 +141,8 @@ export class DropDownArrow {
      * @param ev - Mouse event.
      */
     onClickHandler(ev: MouseEvent): void {
-        ev.stopPropagation();
-        ev.preventDefault();
         this.setState(!this.state);
+        ev.stopPropagation();
     }
 
     /**

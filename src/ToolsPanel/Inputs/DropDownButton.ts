@@ -55,10 +55,7 @@ export class DropDownButton {
      */
     connectEventHandlers(): void {
         this.onClickHandler = this.onClickHandler.bind(this);
-        this.Element.onmousedown = (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-        };
+        this.Element.onmousedown = (ev) => { ev.preventDefault();}
         this.button.addEventListener("click", this.onClickHandler, false);
     }
 
