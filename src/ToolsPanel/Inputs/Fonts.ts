@@ -245,10 +245,16 @@ const fontCheck = new Set(windowsFonts.concat(macFonts).concat(linuxFonts).sort(
  * @returns - Array with available font names.
  */
 export function getAvailableFonts(): string[] {
-    const fontAvailable = [];
+    const fontAvailable: string[] = [];
     for (const font of fontCheck.values()) {
         if (document.fonts.check(`12px "${font}"`)) {
-            fontAvailable.push(font);
+            const div = document.createElement("div");
+            div.style.fontFamily = font;
+            const actualFont = div.style.fontFamily;
+            const actualFontFormat = actualFont.replaceAll('"', '')
+            if (!fontAvailable.includes(actualFont) && !fontAvailable.includes(actualFontFormat)) {
+                fontAvailable.push(actualFont);
+            }
         }
     }
     return fontAvailable;
