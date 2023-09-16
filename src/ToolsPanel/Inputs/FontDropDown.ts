@@ -122,8 +122,11 @@ export class FontDropDown extends DropDownButton {
     builldSplitter(): HTMLDivElement {
         const splitter = document.createElement("div");
         splitter.style.width = "100%";
-        splitter.style.height = "3px";
-        splitter.style.backgroundColor = "rgb(220, 220, 220)";
+        splitter.style.height = "2px";
+        splitter.style.borderColor = "rgb(220, 220, 220)";
+        splitter.style.borderWidth = "1px 0px";
+        splitter.style.borderStyle = "solid";
+        splitter.style.backgroundColor = "rgb(180, 180, 180)";
         return splitter;
     }
 
@@ -231,5 +234,3 @@ export class FontDropDown extends DropDownButton {
         this.fontWidget.textContent = font.replaceAll('"', '');
     }
 }
-
-
