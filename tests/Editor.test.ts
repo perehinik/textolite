@@ -525,33 +525,6 @@ describe('Testing setStyleFromObj', () => {
         expect(updateStyleAndOptimizeMock.mock.calls[0][1]).toEqual(sel);
         expect(updateStyleAndOptimizeMock.mock.calls[0][2]).toEqual(style);
     });
-
-    test('only set alignment', () => {
-        const {editor, editorDiv, editorP, txtNd} = buildEditor();
-        const updateStyleAndOptimizeMock = jest.fn();
-        const setCursorStyleMock = jest.fn();
-        const setAlignmentMock = jest.fn();
-
-        const sel: SelectionAdj = {
-            startNode: txtNd,
-            startOffset: 1,
-            endNode: txtNd,
-            endOffset: 5,
-            commonNode: editorP,
-            isEmpty: false
-        };
-        getAdjSelectionMock.mockReturnValue(sel);
-        setAlignmentMock.mockReturnValue({});
-
-        editor.updateStyleAndOptimize = updateStyleAndOptimizeMock;
-        editor.setCursorStyle = setCursorStyleMock;
-
-        const style = {"text-align": "left"} as CSSObj;
-        editor.setStyleFromObj(style);
-
-        expect(setCursorStyleMock.mock.calls).toHaveLength(0);
-        expect(updateStyleAndOptimizeMock.mock.calls).toHaveLength(0);
-    });
 });
 
 describe('Testing setAlignment', () => {

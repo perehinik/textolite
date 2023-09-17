@@ -50,14 +50,17 @@ export function getAdjSelection(splitNodes: boolean, rootNode: Node): SelectionA
     const sel = window.getSelection();
     if (!sel || !sel.anchorNode || !sel.anchorNode.parentNode || !sel.focusNode || !rootNode) {return;}
 
+    const anchorHierarchy = getNodeHierarchy(sel.anchorNode, rootNode);
+    const focusHierarchy = getNodeHierarchy(sel.focusNode, rootNode);
+    if (!anchorHierarchy.includes(rootNode) || !focusHierarchy.includes(rootNode)) {return;}
+
     const selIsOneNode = sel.anchorNode.isSameNode(sel.focusNode);
 
     let commonNode: Node = sel.anchorNode.parentNode;
     let reverseSelection = sel.anchorOffset < sel.focusOffset || !selIsOneNode ? false : true;
 
     if (!selIsOneNode) {
-        const anchorHierarchy = getNodeHierarchy(sel.anchorNode, rootNode);
-        const focusHierarchy = getNodeHierarchy(sel.focusNode, rootNode);
+        
         commonNode = getCommonNode(anchorHierarchy, focusHierarchy);
         reverseSelection = isReverseSelection(anchorHierarchy, focusHierarchy, commonNode);
     }
