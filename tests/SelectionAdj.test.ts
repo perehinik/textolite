@@ -109,6 +109,12 @@ describe('Testing getIndex', () => {
         expect(getIndex(nd2, 3, commonNd)).toBe(8);
         expect(getIndex(nd1, 3, nd1Span)).toBe(3);
     });
+
+    test('max depth exceeded', () => {
+        const {commonNd, nd1Span, nd1, nd2} = buildTree();
+
+        expect(getIndex(nd1, 3, document.body, 2)).toBe(0);
+    });
 });
 
 

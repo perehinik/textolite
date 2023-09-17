@@ -9,8 +9,7 @@ import { brightnessIcon, buildSVG } from "../Icons";
 /**
  * Class implements slider with srightness icon.
  */
-export class BrightnessSlider{
-    private value: number = 0;
+export class BrightnessSlider {
     Element: HTMLDivElement;
     onStateChange: (value: number) => void;
     valueBox: HTMLDivElement;
@@ -26,7 +25,7 @@ export class BrightnessSlider{
         this.sliderValueChanged = this.sliderValueChanged.bind(this);
 
         this.Element = this.buildElement();
-        this.slider = new RangeSlider(-100, 100, 1, this.value, this.sliderValueChanged);
+        this.slider = new RangeSlider(-100, 100, 1, 0, this.sliderValueChanged);
         this.valueBox = this.buildValueBox();
 
         this.Element.appendChild(this.buildBrightnesIcon());
@@ -102,7 +101,6 @@ export class BrightnessSlider{
     setValue(newValue: number): void {
         this.slider.setValue(newValue);
         this.valueBox.textContent = "" + newValue;
-        this.value = newValue;
         this.onStateChange(newValue);
     }
     
