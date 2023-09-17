@@ -48,11 +48,11 @@ export type SelectionAdj = {
  */
 export function getAdjSelection(splitNodes: boolean, rootNode: Node): SelectionAdj | undefined {
     const sel = window.getSelection();
-    if (!sel || !sel.anchorNode || !sel.focusNode || !rootNode) {return;}
+    if (!sel || !sel.anchorNode || !sel.anchorNode.parentNode || !sel.focusNode || !rootNode) {return;}
 
     const selIsOneNode = sel.anchorNode.isSameNode(sel.focusNode);
 
-    let commonNode = sel.anchorNode.parentNode ? sel.anchorNode.parentNode : sel.anchorNode;
+    let commonNode: Node = sel.anchorNode.parentNode;
     let reverseSelection = sel.anchorOffset < sel.focusOffset || !selIsOneNode ? false : true;
 
     if (!selIsOneNode) {
@@ -150,18 +150,19 @@ function fixSelectionEnd(sel: SelectionAdj): SelectionAdj {
  * @param nd - Node with offset.
  * @param offset - Offset from start of `nd`.
  * @param rootNode - Base node for returned offset.
+ * @param maxDepth - Max depth from rootNode to nd.
  * @returns Relative position of offset in node `nd` relating to start of rootNode.
  */
-function getIndex(nd: Node | null, offset: number, rootNode: Node) : number | undefined {
+function getIndex(nd: Node | null, offset: number, rootNode: Node, maxDepth?: number) : number | undefined {
     if (!nd?.parentElement ) {return;}
     let currentNode = nd;
     let index = 0;
     let prevNode : Node;
     const content = [];
+    let depth = maxDepth ? maxDepth : 1000;
 
-    let maxDepth = 1000;
-    while (maxDepth > 0) {
-        maxDepth --;
+    while (depth > 0) {
+        depth --;
         prevNode = currentNode
         currentNode = currentNode.parentNode as Node;
         const nodeList = currentNode.childNodes;

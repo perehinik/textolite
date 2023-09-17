@@ -82,6 +82,17 @@ describe('Testing getChildNodeByIndex', () => {
         expect(res.node.isSameNode(nd2)).toBeTruthy();
         expect(res.offset).toBe(3);
     });
+
+    test('last node empty', () => {
+        const nd = document.createElement("SPAN");
+        const txtNd = document.createTextNode("");
+        nd.append(txtNd);
+
+        const res = getChildNodeByIndex(nd, 1);
+
+        expect(res.node).toEqual(txtNd);
+        expect(res.offset).toBe(0);
+    });
 });
 
 describe('Testing getNodeHierarchy', () => {

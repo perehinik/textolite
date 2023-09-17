@@ -217,7 +217,7 @@ export class Editor {
         if (!selAdj || !newStyle || !selAdj.startNode) {return;}
         newStyle = this.setAlignment(selAdj, newStyle);
         if (!newStyle || Object.keys(newStyle).length === 0) {return;}  
-        if (!selAdj.isEmpty) {
+        if (selAdj && selAdj.startNode && !selAdj.isEmpty) {
             this.updateStyleAndOptimize(rootNode, selAdj, newStyle);
         } else {
             this.setCursorStyle(selAdj, newStyle)
@@ -264,11 +264,11 @@ export class Editor {
      * @param newStyle - New style which should be applied on selection area.
      */
     updateStyleAndOptimize(rootNode: Node, sel: SelectionAdj, newStyle: CSSObj): void {
-        if (!sel || !sel.startNode) {return;}
         setStyle(sel, newStyle);
+        if (!rootNode.textContent) {return;}
         // Optimize DOM structure after style update
         //ToDo IP: this can be upgraded to optimyze only modified nodes, not the whoile editor tree.
-        const nodeReplacement = rootNode ? optimizeNode(rootNode, defaultStyle) as HTMLElement : null;
+        const nodeReplacement = optimizeNode(rootNode, defaultStyle) as HTMLElement;
         let nd = rootNode;
 
         if (rootNode && rootNode.parentNode && nodeReplacement) {

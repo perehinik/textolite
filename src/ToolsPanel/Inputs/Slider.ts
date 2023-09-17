@@ -12,6 +12,8 @@ export class RangeSlider{
     Element: HTMLInputElement;
     onStateChange: (position: number) => void;
     eventEnabled: boolean = true;
+    min: number;
+    max: number;
     value: number;
 
     /**
@@ -35,7 +37,9 @@ export class RangeSlider{
         const styleNode = buildStyleNode(sliderStyle, sliderStyleHover, webkitThumbStyle, firefoxThumbStyle);
         this.Element.className = "sliderStyle";
         this.Element.addEventListener("input", this.valueChanged);
-        this.value = 0;
+        this.min = min;
+        this.max = max;
+        this.value = value;
         this.Element.appendChild(styleNode);
         this.onStateChange = onStateChange;
     }
@@ -44,10 +48,15 @@ export class RangeSlider{
      * Set slider position.
      *
      * @param value - New position.
+     * @returns - True if value had been updated.
      */
-    setValue(value: number): void {
-        this.Element.value = "" + value;
-        this.value = value;
+    setValue(value: number): boolean {
+        if (this.min <= value && value <= this.max) {
+            this.Element.value = "" + value;
+            this.value = value;
+            return true;
+        }
+        return false;
     }
 
     /**
