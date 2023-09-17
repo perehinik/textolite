@@ -17,6 +17,18 @@ const buttonStyle: CSSObj = {
 /**
  * Styles for button when pressed(active).
  */
+const unselectableStyle: CSSObj = {
+    selector: ".unselectable > *",
+    "-moz-user-select": "-moz-none",
+    "-khtml-user-select": "none",
+    "-webkit-user-select": "none",
+    "-ms-user-select": "none",
+    "user-select": "none",
+}
+
+/**
+ * Styles for button when pressed(active).
+ */
 const buttonStyleActive: CSSObj = {
     selector: ".buttonStyle:active",
     'background': 'rgba(200, 200, 200, 0.5)',    
@@ -26,7 +38,7 @@ const buttonStyleActive: CSSObj = {
  * Node with button styles. 
  * Yes I know ,I can use css. It's just more fun to work with DOM directly.
  */
-const buttonStyleNode = buildStyleNode(buttonStyle, buttonStyleActive);
+const buttonStyleNode = buildStyleNode(buttonStyle, buttonStyleActive, unselectableStyle);
 
 /**
  * Implementation of base class for dropdown button
@@ -44,8 +56,10 @@ export class DropDownButton {
         this.button = this.buildButton();
 
         this.dropDownArrow = new DropDownArrow(() => {});
+        this.Element.appendChild(buttonStyleNode);
         this.Element.appendChild(this.button);
         this.Element.appendChild(this.dropDownArrow.Element);
+        this.Element.classList.add("unselectable");
 
         this.connectEventHandlers();
     }
@@ -87,7 +101,6 @@ export class DropDownButton {
         button.style.flexDirection = "column";
         button.style.justifyContent = "center";
         button.style.alignItems = "center";
-        button.appendChild(buttonStyleNode);
         button.classList.add("buttonStyle");
         return button;
     }

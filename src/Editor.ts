@@ -214,9 +214,9 @@ export class Editor {
     setStyleFromObj(newStyle: CSSObj): void {
         const rootNode = document.getElementById(this.editorDivId) as Node;
         const selAdj = getAdjSelection(true, rootNode);
+
         if (!selAdj || !newStyle || !selAdj.startNode) {return;}
-        newStyle = this.setAlignment(selAdj, newStyle);
-        if (!newStyle || Object.keys(newStyle).length === 0) {return;}  
+        if (!newStyle || Object.keys(newStyle).length === 0) {return;}
         if (selAdj && selAdj.startNode && !selAdj.isEmpty) {
             this.updateStyleAndOptimize(rootNode, selAdj, newStyle);
         } else {
@@ -264,6 +264,7 @@ export class Editor {
      * @param newStyle - New style which should be applied on selection area.
      */
     updateStyleAndOptimize(rootNode: Node, sel: SelectionAdj, newStyle: CSSObj): void {
+        newStyle = this.setAlignment(sel, newStyle);
         setStyle(sel, newStyle);
         if (!rootNode.textContent) {return;}
         // Optimize DOM structure after style update
@@ -290,6 +291,7 @@ export class Editor {
      * @param newStyle - New style which should be applied on selection area.
      */
     setCursorStyle(selAdj: SelectionAdj, newStyle: CSSObj): void {
+        newStyle = this.setAlignment(selAdj, newStyle);
         let cursorNd = selAdj.startNode;
         if (cursorNd.textContent !== "\u200b") {
             cursorNd = this.insertEmptySpan(selAdj.startNode, selAdj.startOffset);
