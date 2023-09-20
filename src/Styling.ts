@@ -32,7 +32,7 @@ export const defaultStyleP: CSSObj = {
     'margin-block-end': '0em',
     'margin-inline-start': '0px',
     'margin-inline-end': '0px',
-    'text-indent': '1em',
+    'text-indent': '10pt',
 }
 
 /**
