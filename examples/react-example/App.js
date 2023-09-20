@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Editor } from 'textolite';
 
-function App() {
+export default function App() {
   let editor = null;
   useEffect(() => {
     editor = new Editor("editor-container");
@@ -9,9 +9,7 @@ function App() {
 
   return (    
     <div style={{display: "flex", justifyContent: "center", paddingTop: "30px"}}>
-      <div id={"editor-container"} style={{width: "90%"}}></div>
+      <div id={"editor-container"} style={{width: "90%", maxWidth: "1200px"}}></div>
     </div>
   );
 }
-
-export default App;

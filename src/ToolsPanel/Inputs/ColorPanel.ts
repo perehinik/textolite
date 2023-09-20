@@ -4,6 +4,7 @@
  */
 
 import { BrightnessSlider } from "./BrightnessSlider";
+import { Color, getColors, colorToString } from "./ColorToolset";
 
 /**
  * Class implements color panel.
@@ -14,7 +15,7 @@ export class ColorPanel {
     Element: HTMLDivElement;
     buttons: HTMLDivElement[] = [];
     usedColorsButtons: HTMLDivElement[] = [];
-    onStateChange: Function;
+    onStateChange: (colorStr: string) => void;
     colors: Color[];
     usedColors: Color[] = [];
     usedColorId: number = 0;
@@ -26,7 +27,7 @@ export class ColorPanel {
      *
      * @param onStateChange - Callback for alignment update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (colorStr: string) => void) {
         this.onStateChange = onStateChange;
         this.Element = this.buildElement();
         this.colors = getColors();
@@ -54,7 +55,8 @@ export class ColorPanel {
      * Connect handlers to events.
      */
     connectEventHandlers(): void {
-        this.colorBox.addEventListener("click", this.colorBoxClickHandler);
+        this.colorBox.onmousedown = (event) => {event.preventDefault();}
+        this.colorBox.addEventListener("click", this.colorBoxClickHandler, false);
     }
     
     /**
@@ -82,7 +84,7 @@ export class ColorPanel {
      * @param onClick - Callback for button click.
      * @returns - Single button element.
      */
-    buildButton(colorId: number, color: Color, onClick: Function): HTMLDivElement {
+    buildButton(colorId: number, color: Color, onClick: (colorId: number, color: Color) => void): HTMLDivElement {
         const button = document.createElement("div");
         button.style.display = "inline-block";
         button.style.margin = "2px 2px";
@@ -93,7 +95,7 @@ export class ColorPanel {
         button.style.padding = "none";
         button.style.backgroundColor = colorToString(color);
 
-        button.onmousedown = (event) => {event.preventDefault();};
+        button.onmousedown = (event) => {event.preventDefault();}
         button.addEventListener("click", () => {onClick(colorId, color)}, false);
         return button;
     }
@@ -174,8 +176,8 @@ export class ColorPanel {
      */
     onClickHandler(colorId: number, color: Color): void {
         if (this.currentColorId !== colorId) {
-            this.setButtonState(this.buttons[this.currentColorId], false);
-            this.setButtonState(this.buttons[colorId], true);
+            this.setButtonState(this.currentColorId, false);
+            this.setButtonState(colorId, true);
             this.currentColorId = colorId;
         }
         const colorStr: string = colorToString(color);
@@ -187,10 +189,11 @@ export class ColorPanel {
     /**
      * Updats style for color button when it's clicked.
      *
-     * @param colorId - Id of standart or custom color.
-     * @param color - Color object.
+     * @param buttonId - Id of button.
+     * @param state - New button state.
      */
-    setButtonState(button: HTMLDivElement, state: boolean): void {
+    setButtonState(buttonId: number, state: boolean): void {
+        const button = this.buttons[buttonId]
         if (state) {
             button.style.border = "2px solid black";
             button.style.margin = "1px 1px";
@@ -206,7 +209,7 @@ export class ColorPanel {
      * @param newValue - New slider value.
      */
     sliderValueChanged(newValue: number): void {
-        const currentColor = {...standartColors[this.currentColorId]};
+        const currentColor = {...this.colors[this.currentColorId]};
         currentColor.brightness = newValue / 100;
         const colorStr: string = colorToString(currentColor);
         this.colorBox.style.backgroundColor = colorStr;
@@ -265,155 +268,4 @@ export class ColorPanel {
     getColorStr(): string {
         return colorToString(this.colors[this.currentColorId]);
     }
-}
-
-/**
- * Color type definition.
- * 
- * @param R - Red 0-255.
- * @param G - Green 0-255.
- * @param B - Blue 0-255.
- * @param opacity - 0-1, 0-transparent.
- * @param brightness - -1-1. -1=black, 1=white.
- */ 
-export type Color = {
-    R: number,
-    G: number,
-    B: number,
-    opacity?: number,
-    brightness?: number
-};
-
-/**
- * Array of main colors supported by color panel.
- */ 
-export const standartColors: Color[] = getColors();
-
-/**
- * Build array with standart colors.
- * 
- * @returns Array with standart colors.
- */ 
-function getColors(): Color[] {
-    const gradient: number[] = [0, 0, 0, 0, 0, 128, 255, 255, 255, 255, 255, 128];
-    const colors: Color[] = [];
-    for(let i = 0; i < gradient.length; i++) {
-        colors.push({
-            R: gradient[i],
-            G: gradient[(i + 4) % gradient.length],
-            B: gradient[(i + 8) % gradient.length],
-            opacity: 1,
-            brightness: 0
-        });
-    }
-    colors.push({ R: 128, G: 128, B: 128, opacity: 1 });
-    return colors;
-}
-
-/**
- * Convert color object to color string.
- * 
- * @param color - Color object.
- * @returns - Result color string.
- */ 
-export function colorToString(color: Color): string {
-    let {R, G, B} = color;
-    if (color.brightness && color.brightness > 0) {
-        R += Math.round((255 - R) * color.brightness);
-        G += Math.round((255 - G) * color.brightness);
-        B += Math.round((255 - B) * color.brightness);
-    } else if (color.brightness && color.brightness < 0) {
-        R += Math.round(R * color.brightness);
-        G += Math.round(G * color.brightness);
-        B += Math.round(B * color.brightness);
-    }
-    // Limit value to 0-255
-    R = Math.min(Math.max(R, 0),255);
-    G = Math.min(Math.max(G, 0),255);
-    B = Math.min(Math.max(B, 0),255);
-
-    return color.opacity != null ? `rgba(${R}, ${G}, ${B}, ${color.opacity})` : `rgb(${R}, ${G}, ${B})`;
-}
-
-/**
- * Convert color string to closest color object.
- * 
- * @param color - Color string.
- * @returns - Closest standart color representing specified string.
- */ 
-export function stringToColor(color: string): Color | void {
-    const colorNumbers = extractNumbers(color);
-    if (colorNumbers.length < 3 || colorNumbers.length > 4) { return; }
-    const result = getBestMatchColor({R: colorNumbers[0], G: colorNumbers[1], B: colorNumbers[2]});
-    const colorSum = colorNumbers[0] + colorNumbers[1] + colorNumbers[2];
-    const resultColorSum = result.R + result.G + result.B;
-    let coef = 0;
-    if (resultColorSum > colorSum) {
-        coef = -(resultColorSum - colorSum) / resultColorSum;
-    } else if (resultColorSum < colorSum) {
-        coef = (colorSum - resultColorSum) / ((255 * 3) - resultColorSum)
-    }
-    result.brightness = Math.round(coef * 100) / 100;
-    result.opacity = colorNumbers.length === 4 ? colorNumbers[3] : undefined;
-    return result;
-}
-
-/**
- * Extract numbers from color string.
- * 
- * @param str - Color string, for example `rgb(10, 10, 10)` or `rgba(10, 10, 10, 0.5)`.
- * @returns - Array with numbers extracted from color string, [10, 10, 10, 0.1].
- */
-function extractNumbers(str: string): number[] {
-    const result: number[] = [];
-    let currentNumber: string = "";
-    for (let i = 0; i < str.length; i++) {
-        const charCode = str.charCodeAt(i);
-        // 0-9
-        if (charCode <= 57 && charCode >= 48) {currentNumber += str.charAt(i)}
-        // decimal dot
-        else if (charCode ===  46) {currentNumber += str.charAt(i)}
-        // all other symbols
-        else if (currentNumber.length > 0) {
-            result.push(parseFloat(currentNumber));
-            currentNumber = "";
-        }
-    }
-    return result;
-}
-
-/**
- * Analize color object and return color from standart colors list which is closest to specified color.
- * 
- * @param color - Color object.
- * @returns - Color object.
- */
-function getBestMatchColor(color: Color): Color{
-    let {R, G, B} = color;
-    // R/G/B components are the same so it's one of grey shades.
-    if (R === G && G === B) {return {...standartColors[standartColors.length - 1]};}
-    let bestMatchId = 0;
-    let bestDiff = 255
-    for (let i = 0; i < standartColors.length; i ++) {
-        const stCol = standartColors[i];
-        let diff = 256;
-        const coefs: number[] = [];
-        if (stCol.R >= R && stCol.G >= G && stCol.B >= B) {
-            if (stCol.R !== R) {coefs.push((stCol.R - R) / stCol.R)};
-            if (stCol.G !== G) {coefs.push((stCol.G - G) / stCol.G)};
-            if (stCol.B !== B) {coefs.push((stCol.B - B) / stCol.B)};
-        } else if (stCol.R <= R && stCol.G <= G && stCol.B <= B) {
-            if (stCol.R !== 256 && stCol.R !== R) {coefs.push((R - stCol.R) / (255.1 - stCol.R))};
-            if (stCol.G !== 256 && stCol.G !== G) {coefs.push((G - stCol.G) / (255.1- stCol.G))};
-            if (stCol.B !== 256 && stCol.B !== B) {coefs.push((B - stCol.B) / (255.1 - stCol.B))};
-        }
-        // No need to proceed farther, this is the exact color.
-        if (coefs.length === 0) {return {...standartColors[i]};}
-        diff = Math.max(...coefs) - Math.min(...coefs);
-        if (diff < bestDiff) {
-            bestDiff = diff;
-            bestMatchId = i
-        }
-    }
-    return {...standartColors[bestMatchId]};
 }

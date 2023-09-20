@@ -10,7 +10,8 @@ import {
     setStyle,
     updateNodeStyle,
     compareChildStyle,
-    compareNodeStyles
+    compareNodeStyles,
+    buildStyleNode
 } from "../src/Styling";
 
 const {
@@ -66,6 +67,21 @@ describe('Testing getStyle', () => {
     
         expect(getStyle(nd)["font-style"]).toBe("bold");
         expect(Object.keys(getStyle()).length).toBe(0);
+    });
+});
+
+describe('Testing buildStyleNode', () => {
+    test('no selector', () => {
+        const style: CSSObj = {
+            "font-weight": "bold",
+            "font-size": "1pt",
+            "margin": "2px",
+            "padding": "1px"
+        };
+        
+        const result = buildStyleNode(style);
+
+        expect(result.innerHTML).toBe("");
     });
 });
 

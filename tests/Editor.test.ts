@@ -87,6 +87,17 @@ describe('Testing constructor', () => {
     });
 });
 
+describe('Testing getHTML', () => {
+    test('', () => {
+        const editor = new Editor();
+        
+        const html = editor.getHTML();
+
+        expect(html.substring(0, 5)).toBe("<div>");
+        expect(html.substring(html.length - 6)).toBe("</div>");
+    });
+});
+
 describe('Testing getEditorRootNode', () => {
     test('wrong id', () => {
         const nd = Editor.getEditorRootNode("wrong-id");
@@ -514,33 +525,6 @@ describe('Testing setStyleFromObj', () => {
         expect(updateStyleAndOptimizeMock.mock.calls[0][1]).toEqual(sel);
         expect(updateStyleAndOptimizeMock.mock.calls[0][2]).toEqual(style);
     });
-
-    test('only set alignment', () => {
-        const {editor, editorDiv, editorP, txtNd} = buildEditor();
-        const updateStyleAndOptimizeMock = jest.fn();
-        const setCursorStyleMock = jest.fn();
-        const setAlignmentMock = jest.fn();
-
-        const sel: SelectionAdj = {
-            startNode: txtNd,
-            startOffset: 1,
-            endNode: txtNd,
-            endOffset: 5,
-            commonNode: editorP,
-            isEmpty: false
-        };
-        getAdjSelectionMock.mockReturnValue(sel);
-        setAlignmentMock.mockReturnValue({});
-
-        editor.updateStyleAndOptimize = updateStyleAndOptimizeMock;
-        editor.setCursorStyle = setCursorStyleMock;
-
-        const style = {"text-align": "left"} as CSSObj;
-        editor.setStyleFromObj(style);
-
-        expect(setCursorStyleMock.mock.calls).toHaveLength(0);
-        expect(updateStyleAndOptimizeMock.mock.calls).toHaveLength(0);
-    });
 });
 
 describe('Testing setAlignment', () => {
@@ -561,7 +545,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("right");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -586,7 +570,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -608,7 +592,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -634,7 +618,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("right");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -660,7 +644,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("right");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -668,8 +652,36 @@ describe('Testing setAlignment', () => {
 });
 
 describe('Testing updateStyleAndOptimize', () => {
+    test('empty root', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        getAdjSelectionMock.mockImplementation(() => {});
+        setStyleMock.mockImplementation(() => {});
+        optimizeNodeMock.mockImplementation(() => {});
+        restoreSelectionSpy.mockImplementation(() => {});
+
+        const style = {"font-size": "13pt"} as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: editorP,
+            startOffset: 0,
+            endNode: editorDiv,
+            endOffset: 0,
+            commonNode: editorP,
+            isEmpty: true
+        };
+
+        const editorDivParent = editorDiv.parentNode;
+        optimizeNodeMock.mockReturnValue(undefined);
+
+        editor.updateStyleAndOptimize(editorDiv, sel, style);
+
+        expect(setStyleMock.mock.calls).toHaveLength(1);
+        expect(optimizeNodeMock.mock.calls).toHaveLength(0);
+        expect(restoreSelectionSpy.mock.calls).toHaveLength(0);
+    });
+
     test('optimization failed', () => {
         const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        txtNd.textContent = "textt";
         getAdjSelectionMock.mockImplementation(() => {});
         setStyleMock.mockImplementation(() => {});
         optimizeNodeMock.mockImplementation(() => {});
@@ -693,12 +705,13 @@ describe('Testing updateStyleAndOptimize', () => {
         expect(setStyleMock.mock.calls).toHaveLength(1);
         expect(optimizeNodeMock.mock.calls).toHaveLength(1);
         expect(restoreSelectionSpy.mock.calls).toHaveLength(1);
-        // editor div has not been replace because optimization has failed
+        // editor div has not been replaced because optimization has failed
         expect(editorDivParent?.childNodes[0]).toEqual(editorDiv);
     });
 
     test('optimization success', () => {
         const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        txtNd.textContent = "textt";
         getAdjSelectionMock.mockImplementation(() => {});
         setStyleMock.mockImplementation(() => {});
         optimizeNodeMock.mockImplementation(() => {});
@@ -711,6 +724,40 @@ describe('Testing updateStyleAndOptimize', () => {
             endNode: txtNd,
             endOffset: 5,
             commonNode: editorP,
+            isEmpty: false
+        };
+
+        const editorDivParent = editorDiv.parentNode;
+        const optimizationRes = document.createElement("div");
+        optimizeNodeMock.mockReturnValue(optimizationRes);
+
+        editor.updateStyleAndOptimize(editorDiv, sel, style);
+
+        expect(setStyleMock.mock.calls).toHaveLength(1);
+        expect(optimizeNodeMock.mock.calls).toHaveLength(1);
+        expect(optimizeNodeMock.mock.calls[0][0]).toEqual(editorDiv);
+        expect(restoreSelectionSpy.mock.calls).toHaveLength(1);
+        // editor div has been replacd with optimized node
+        expect(editorDivParent?.childNodes[0]).toEqual(optimizationRes);
+    });
+
+    test('optimization success, with indexes', () => {
+        const {editor, editorDiv, editorP, txtNd} = buildEditor();
+        txtNd.textContent = "textt";
+        getAdjSelectionMock.mockImplementation(() => {});
+        setStyleMock.mockImplementation(() => {});
+        optimizeNodeMock.mockImplementation(() => {});
+        restoreSelectionSpy.mockImplementation(() => {});
+
+        const style = {"font-size": "13pt"} as CSSObj;
+        const sel: SelectionAdj = {
+            startNode: txtNd,
+            startOffset: 1,
+            endNode: txtNd,
+            endOffset: 5,
+            commonNode: editorP,
+            startIndex: 1,
+            endIndex: 5,
             isEmpty: false
         };
 

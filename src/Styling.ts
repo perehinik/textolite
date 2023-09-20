@@ -19,8 +19,8 @@ export const defaultStyle: CSSObj = {
     'letter-spacing': '0px',
     'line-height': '1.2',
     'font-family': 'Arial',
-    'font-size': '12pt'
-    //'vertical-align': 'sub'/'super'
+    'font-size': '12pt',
+    'vertical-align': 'baseline'
 }
 
 /**
@@ -32,7 +32,7 @@ export const defaultStyleP: CSSObj = {
     'margin-block-end': '0em',
     'margin-inline-start': '0px',
     'margin-inline-end': '0px',
-    'text-indent': '1em',
+    'text-indent': '10pt',
 }
 
 /**
@@ -48,7 +48,7 @@ export const defaultStyleNode: HTMLStyleElement = buildStyleNode(defaultStyle, d
  * @returns - CSSObj styles combined into HTML style node,.
  */
 export function buildStyleNode(...args: CSSObj[]): HTMLStyleElement {
-    let style = document.createElement('style');
+    const style = document.createElement('style');
     let styleDescription = "";
     for (let cssId = 0; cssId < args.length; cssId++) {
         if (!args[cssId].selector) {
@@ -100,10 +100,10 @@ export function getStyle(nd?: HTMLElement): CSSObj {
  * @returns Object with combined style. Child style has preferende
  */
 export function applyOverlappingStyle(parentStyle?: CSSObj, childStyle?: CSSObj): CSSObj {
-    if (!parentStyle) {return {...childStyle} as CSSObj};
-    const chNdStyle: CSSObj = {...parentStyle};
+    if (!parentStyle) { return { ...childStyle } as CSSObj }
+    const chNdStyle: CSSObj = { ...parentStyle };
     if (childStyle) {
-        for (let styleName in childStyle) {
+        for (const styleName in childStyle) {
             chNdStyle[styleName] = childStyle[styleName];
         }
     }
@@ -137,12 +137,12 @@ export function getStyleFromRoot(nd: Node): CSSObj {
 function combineNestedStyles(style1: CSSObj, style2?: CSSObj): CSSObj {
     const res = {...style1};
     if (!style2) {return res;}
-    for (let key in style2) {
+    for (const key in style2) {
         if (!Object.keys(style1).includes(key) || style1[key] !== style2[key]) {
             res[key] = undefinedStyle;
         }
     }
-    for (let key in style1) {
+    for (const key in style1) {
         if (!Object.keys(style2).includes(key)) {
             res[key] = undefinedStyle;
         }
@@ -214,7 +214,6 @@ export function getNestedStyle(sel: SelectionAdj): CSSObj {
 
     const startHierarchy = getNodeHierarchy(sel.startNode, sel.commonNode);
     const endHierarchy = getNodeHierarchy(sel.endNode, sel.commonNode);
-    const limitList = startHierarchy.concat(endHierarchy);
     const style = getNodeNestedStyle(sel.commonNode, commonNodeStyle, startHierarchy, endHierarchy, true, true);
 
     return style ? style : commonNodeStyle;
@@ -258,7 +257,7 @@ export function updateNodeStyle(nd: Node, newStyle: CSSObj) : Node {
     const el = nd as HTMLElement;
     // If node has style property then style can be changed directly
     if (el.style) {
-        for(let key in newStyle) {
+        for(const key in newStyle) {
             el.style.setProperty(key, newStyle[key]);
         }
     }
@@ -288,7 +287,7 @@ function resetChildrenStyle(nd: Node, newStyle: CSSObj) : void{
     nd.childNodes.forEach(ndChild => {
         const el = ndChild as HTMLElement;
         if (el.style) { 
-            for(let key in newStyle) {
+            for(const key in newStyle) {
                 el.style.setProperty(key, "");
             }
         }
@@ -368,7 +367,7 @@ function setStyleFromEnd(sel: SelectionAdj, newStyle: CSSObj): Node {
  */
 export function compareChildStyle(parentStyle?: CSSObj, childStyle?: CSSObj): boolean {
     if (!parentStyle && childStyle) {return false;}
-    for (let cssName in childStyle) {
+    for (const cssName in childStyle) {
         if (parentStyle && parentStyle[cssName] !== childStyle[cssName]) {return false;}
     }
     return true;
@@ -384,7 +383,7 @@ export function compareChildStyle(parentStyle?: CSSObj, childStyle?: CSSObj): bo
  */
 export function compareNodeStyles(style1: CSSObj, style2: CSSObj): boolean {
     if (Object.keys(style1).length !== Object.keys(style2).length) {return false;}
-    for (let cssName in style1) {
+    for (const cssName in style1) {
         if (style1[cssName] !== style2[cssName]) {return false;}
     }
     return true;

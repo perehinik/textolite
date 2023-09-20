@@ -10,7 +10,7 @@ import {
     alignRightIcon, 
     alignJustifyIcon, 
     buildSVG 
-} from "../icon/icons";
+} from "../Icons";
 
 /**
  * Enumerator for all possible alignment states.
@@ -33,16 +33,18 @@ export class AlignPanel{
     centerAlignButton: HTMLButtonElement;
     rightAlignButton: HTMLButtonElement;
     justifyAlignButton: HTMLButtonElement;
-    onStateChange: Function;
+    onStateChange: (style: CSSObj) => void;
 
     /**
      * Alignment panel constructor.
      *
      * @param onStateChange - Callback for alignment update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (style: CSSObj) => void) {
         this.Element = document.createElement("div");
-        this.Element.style.display = "inline-block";
+        this.Element.style.display = "inline-flex";
+        this.Element.style.height = "25px";
+        this.Element.style.alignItems = "center";
         this.Element.style.minWidth = "128px";
         this.onStateChange = onStateChange;
         
@@ -72,6 +74,9 @@ export class AlignPanel{
         button.appendChild(svgImg);
         button.style.border = "none";
         button.style.padding = "none";
+        button.style.display = "inline-flex";
+        button.style.height = "25px";
+        button.style.alignItems = "center";
         button.style.backgroundColor = "transparent";
         button.onmousedown = (event) => {event.preventDefault();};
         button.addEventListener("click", () => {this.onClickHandler(onClickState)}, false);
@@ -86,7 +91,7 @@ export class AlignPanel{
     onClickHandler(state: number): void {
         if(state === this.state) {return;}
         this.setState(state);
-        let style = this.getStyleByState(state);
+        const style = this.getStyleByState(state);
 
         if (this.onStateChange) {
             this.onStateChange(style);

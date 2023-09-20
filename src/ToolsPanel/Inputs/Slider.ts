@@ -10,8 +10,10 @@ import { CSSObj, buildStyleNode } from "../../Styling";
  */
 export class RangeSlider{
     Element: HTMLInputElement;
-    onStateChange: Function;
+    onStateChange: (position: number) => void;
     eventEnabled: boolean = true;
+    min: number;
+    max: number;
     value: number;
 
     /**
@@ -23,7 +25,7 @@ export class RangeSlider{
      * @param value - Initial slider value.
      * @param onStateChange - Callback for slider position update.
      */
-    constructor(min: number, max: number, step: number, value: number, onStateChange: Function) {
+    constructor(min: number, max: number, step: number, value: number, onStateChange: (position: number) => void) {
         this.Element = document.createElement("input");
         this.Element.type = "range";
         this.Element.min = `${min}`;
@@ -35,9 +37,10 @@ export class RangeSlider{
         const styleNode = buildStyleNode(sliderStyle, sliderStyleHover, webkitThumbStyle, firefoxThumbStyle);
         this.Element.className = "sliderStyle";
         this.Element.addEventListener("input", this.valueChanged);
-        this.value = 0;
+        this.min = min;
+        this.max = max;
+        this.value = value;
         this.Element.appendChild(styleNode);
-        this.Element = this.Element;
         this.onStateChange = onStateChange;
     }
 
@@ -45,10 +48,15 @@ export class RangeSlider{
      * Set slider position.
      *
      * @param value - New position.
+     * @returns - True if value had been updated.
      */
-    setValue(value: number): void {
-        this.Element.value = "" + value;
-        this.value = value;
+    setValue(value: number): boolean {
+        if (this.min <= value && value <= this.max) {
+            this.Element.value = "" + value;
+            this.value = value;
+            return true;
+        }
+        return false;
     }
 
     /**

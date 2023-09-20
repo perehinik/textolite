@@ -3,15 +3,16 @@
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
-import { buildSVG, fontFamilyIcon } from "../icon/icons";
+import { buildSVG, fontFamilyIcon } from "../Icons";
 import { ColorPanel } from "./ColorPanel";
 import { DropDownButton } from "./DropDownButton";
+import { CSSObj } from "../../Styling";
 
 /**
  * Class implements button for changing text background color.
  */
 export class TextBkGndColorButton extends DropDownButton {
-    onStateChange: Function;
+    onStateChange: (style: CSSObj) => void;
     colorPan: ColorPanel;
     buttonImg: HTMLElement;
     colorStripe: HTMLDivElement;
@@ -21,7 +22,7 @@ export class TextBkGndColorButton extends DropDownButton {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (style: CSSObj) => void) {
         super();
         this.onStateChange = onStateChange;
         this.colorChanged = this.colorChanged.bind(this);

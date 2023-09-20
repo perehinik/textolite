@@ -32,7 +32,7 @@ const fontButtonStyleNode = buildStyleNode(fontButtonStyle, fontButtonnStyleHove
  * Class implements button for changing text font sizes.
  */
 export class FontSizeDropDown extends DropDownButton {
-    onStateChange: Function;
+    onStateChange: (state: CSSObj) => void;
     availableSizes: string[];
     currentFontSize: string = "";
     fontSizeWidget: HTMLDivElement;
@@ -43,10 +43,10 @@ export class FontSizeDropDown extends DropDownButton {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (state: CSSObj) => void) {
         super();
         this.onStateChange = onStateChange;
-        this.fontChanged = this.fontChanged.bind(this);
+        this.fontSizeChanged = this.fontSizeChanged.bind(this);
         this.onClickHandler = this.onClickHandler.bind(this);
         this.availableSizes = [
             '6pt', '7pt', '8pt', '9pt', '10pt', '11pt', '12pt', 
@@ -78,7 +78,7 @@ export class FontSizeDropDown extends DropDownButton {
         container.appendChild(fontButtonStyleNode);
         for (let i = 0; i < this.availableSizes.length; i++) {
             const button = this.buildFontSizeButton(this.availableSizes[i]);
-            button.addEventListener('click', () => this.fontChanged(this.availableSizes[i]));
+            button.addEventListener('click', () => this.fontSizeChanged(this.availableSizes[i]));
             container.appendChild(button);
         }
         return container;
@@ -163,7 +163,7 @@ export class FontSizeDropDown extends DropDownButton {
      *
      * @param fontSize - New font size.
      */
-    fontChanged(fontSize: string): void {
+    fontSizeChanged(fontSize: string): void {
         this.currentFontSize = fontSize;
         this.onStateChange({"font-size": fontSize});
         this.fontSizeWidget.style.fontFamily = fontSize;

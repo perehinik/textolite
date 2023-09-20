@@ -3,7 +3,7 @@
  * @author Ivan Perehiniak <iv.perehinik@gmail.com>
  */
 
-import { buildSVG, arrowDownIcon } from "../icon/icons";
+import { buildSVG, arrowDownIcon } from "../Icons";
 
 /**
  * Class implements arrow button used in dropdown menu.
@@ -11,7 +11,7 @@ import { buildSVG, arrowDownIcon } from "../icon/icons";
 export class DropDownArrow {
     state: boolean = false;
     Element: HTMLDivElement;
-    onStateChange: Function;
+    onStateChange: (state: boolean) => void;
     dropDownAnchor: HTMLDivElement;
     dropDownContainer: HTMLDivElement;
     dropDownWidth: number = 0;
@@ -24,7 +24,7 @@ export class DropDownArrow {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (state: boolean) => void) {
         this.onStateChange = onStateChange;
         this.Element = this.buildElement();
         this.arrowButton = this.buildButton();
@@ -56,16 +56,35 @@ export class DropDownArrow {
         this.onDocClickHandler = this.onDocClickHandler.bind(this);
         this.onDropDownMouseEvent = this.onDropDownMouseEvent.bind(this);
 
-        this.Element.onmousedown = (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
-        };
-        this.Element.addEventListener("click", this.onClickHandler, false);
+        // Arrow mousedown should propagate, click shouldn't
+        this.arrowButton.onmousedown = (ev) => {ev.preventDefault();};
+        this.arrowButton.addEventListener("click", this.onClickHandler, false);
+        this.Element.onmousedown = this.onDropDownMouseEvent;
         document.addEventListener("click", this.onDocClickHandler, false);
-        
         this.dropDownContainer.addEventListener("click", this.onDropDownMouseEvent, false)
-        this.dropDownContainer.addEventListener("mousedown", this.onDropDownMouseEvent, false)
-        this.dropDownContainer.addEventListener("touchstart", this.onDropDownMouseEvent, false)
+    }
+
+    /**
+     * Calback for button click event.
+     *
+     * @param ev - Mouse event.
+     */
+    onClickHandler(ev: MouseEvent): void {
+        this.setState(!this.state);
+        ev.stopPropagation();
+    }
+
+    /**
+     * Calback for click on document outside button and dropdown.
+     * Used to close dropdown.
+     *
+     * @param ev - Mouse event.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    onDocClickHandler(ev?: MouseEvent): void {
+        if (this.state) {
+            this.setState(false);
+        }
     }
 
     /**
@@ -73,7 +92,10 @@ export class DropDownArrow {
      */
     onDropDownMouseEvent(ev: MouseEvent | TouchEvent): void {
         if (!this.hideDropDownOnClick) {
-            if (!(ev.target as Node)?.nodeName || (ev.target as Node)?.nodeName !== "INPUT") {ev.preventDefault()};
+            if (!(ev.target as Node)?.nodeName || (ev.target as Node)?.nodeName.toUpperCase() !== "INPUT") {
+                // For inputs mousedown should be default to enable interaction like slider movement.
+                ev.preventDefault()
+            }
             ev.stopPropagation();
         }
     }
@@ -139,29 +161,6 @@ export class DropDownArrow {
     }
 
     /**
-     * Calback for button click event.
-     *
-     * @param ev - Mouse event.
-     */
-    onClickHandler(ev: MouseEvent): void {
-        ev.stopPropagation();
-        ev.preventDefault();
-        this.setState(!this.state);
-    }
-
-    /**
-     * Calback for click on document outside button and dropdown.
-     * Used to close dropdown.
-     *
-     * @param ev - Mouse event.
-     */
-    onDocClickHandler(ev?: MouseEvent): void {
-        if (this.state) {
-            this.setState(false);
-        }
-    }
-
-    /**
      * Set button state without firing button state update callback.
      *
      * @param newState - If true - button set to ON.
@@ -184,19 +183,19 @@ export class DropDownArrow {
      */
     adjustPosition(): void {
         const elRect = this.dropDownContainer.getBoundingClientRect();
-        let elWidth = elRect.right - elRect.left;
-        elWidth = elWidth != 0 ? elWidth : this.dropDownWidth;
+        const elWidth = elRect.width != 0 ? elRect.width : this.dropDownWidth;
         this.dropDownWidth = elWidth;
 
         const btRect = this.dropDownAnchor.getBoundingClientRect();
-        const btWidth = btRect.right - btRect.left;
-        const docWidth = document.body.getBoundingClientRect().right;
-        const btPos = btRect.left + (btRect.right - btRect.left) / 2
+        const docWidth = document.body.getBoundingClientRect().width;
+        const btPos = btRect.left + btRect.width / 2
 
         let left = 0;
-        const top = btRect.bottom - btRect.top + 10
+        const top = btRect.height + 10
         const expectedRightPos = btPos + elWidth / 2;
-        if (expectedRightPos + 5 <= docWidth) { left = -elWidth / 2 + btWidth / 2; }
+        const expectedLeftPos = btPos - elWidth / 2;
+        if (expectedLeftPos < 5) { left = -btPos + 5;}
+        else if (expectedRightPos + 5 <= docWidth) { left = -elWidth / 2 + btRect.width / 2; }
         else { left = docWidth - btRect.left - elWidth - 5; }
         left += this.dropdownLeft;
         

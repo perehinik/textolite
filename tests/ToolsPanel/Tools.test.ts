@@ -1,6 +1,5 @@
 import { CSSObj } from "../../src/Styling";
 import { Tools } from "../../src/ToolsPanel/Tools";
-import * as iconsModule from '../../src/ToolsPanel/icon/icons'
 import * as fontsModue from "../../src/ToolsPanel/Inputs/Fonts"
 
 const onStyleChange = jest.fn();
@@ -25,7 +24,7 @@ describe('Testing constructor', () => {
         const {tools, toolsContainer, onStyleChange} = buildTools();
 
         expect(tools.onStyleChange).toEqual(onStyleChange);
-        expect(toolsContainer.childNodes.length).toBe(8);
+        expect(toolsContainer.childNodes.length).toBe(13);
     });
 
     test('bold button', () => {
@@ -120,6 +119,22 @@ describe('Testing silentUpdate', () => {
         };
         const setStyleUnderlineMock = jest.fn().mockImplementation(() => {});
         tools.underlineButton.setState = setStyleUnderlineMock;
+
+        tools.silentUpdate(style);
+
+        expect(onStyleChange.mock.calls).toHaveLength(0);
+        expect(setStyleUnderlineMock.mock.calls).toHaveLength(1);
+        expect(setStyleUnderlineMock.mock.calls[0][0]).toBe(true);
+    });
+
+    test('strike-through', () => {
+        const {tools, toolsContainer, onStyleChange} = buildTools();
+        onStyleChange.mockImplementation(() => {});
+        const style: CSSObj = {
+            "text-decoration": "line-through"
+        };
+        const setStyleUnderlineMock = jest.fn().mockImplementation(() => {});
+        tools.strikethroughButton.setState = setStyleUnderlineMock;
 
         tools.silentUpdate(style);
 

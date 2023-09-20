@@ -1,4 +1,1 @@
-module.exports =
-{
-  Editor: require('./dist/Editor.js').Editor
-};
+export { Editor } from './dist/Editor.js';

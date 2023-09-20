@@ -33,7 +33,7 @@ const fontButtonStyleNode = buildStyleNode(fontButtonStyle, fontButtonnStyleHove
  * Class implements button for changing text font.
  */
 export class FontDropDown extends DropDownButton {
-    onStateChange: Function;
+    onStateChange: (state: CSSObj) => void;
     availableFonts: string[];
     currentFont: string = "";
     fontWidget: HTMLDivElement;
@@ -48,7 +48,7 @@ export class FontDropDown extends DropDownButton {
      *
      * @param onStateChange - Callback for button state update.
      */
-    constructor(onStateChange: Function) {
+    constructor(onStateChange: (state: CSSObj) => void) {
         super();
         this.onStateChange = onStateChange;
         this.fontChanged = this.fontChanged.bind(this);
@@ -98,7 +98,7 @@ export class FontDropDown extends DropDownButton {
         if (this.latestFontsContainer.childNodes[this.latestFontsId]) {
             const fontButton = this.latestFontsContainer.childNodes[this.latestFontsId] as HTMLElement;
             fontButton.style.fontFamily = font;
-            fontButton.textContent = font;
+            fontButton.textContent = font.replaceAll('"', '');
             this.latestFonts[this.latestFontsId] = font;
         } else {
             this.latestFonts.push(font);
@@ -122,8 +122,11 @@ export class FontDropDown extends DropDownButton {
     builldSplitter(): HTMLDivElement {
         const splitter = document.createElement("div");
         splitter.style.width = "100%";
-        splitter.style.height = "3px";
-        splitter.style.backgroundColor = "rgb(220, 220, 220)";
+        splitter.style.height = "2px";
+        splitter.style.borderColor = "rgb(220, 220, 220)";
+        splitter.style.borderWidth = "1px 0px";
+        splitter.style.borderStyle = "solid";
+        splitter.style.backgroundColor = "rgb(180, 180, 180)";
         return splitter;
     }
 
@@ -162,7 +165,7 @@ export class FontDropDown extends DropDownButton {
     buildFontButton(font: string): HTMLDivElement {
         const button = document.createElement("div");
         button.style.fontFamily = font;
-        button.textContent = font;
+        button.textContent = font.replaceAll('"', '');
         button.style.height = "28px";
         button.style.fontSize = "15px";
         button.style.display = "flex";
@@ -190,7 +193,7 @@ export class FontDropDown extends DropDownButton {
         this.currentFont = font;
         this.fontWidget.style.fontFamily = font;
         this.fontWidget.style.color = "black";
-        this.fontWidget.textContent = font;
+        this.fontWidget.textContent = font.replaceAll('"', '');
     }
 
     /**
@@ -214,7 +217,7 @@ export class FontDropDown extends DropDownButton {
         this.onStateChange({"font-family": font});
         this.fontWidget.style.fontFamily = font;
         this.fontWidget.style.color = "black";
-        this.fontWidget.textContent = font;
+        this.fontWidget.textContent = font.replaceAll('"', '');
     }
 
     /**
@@ -228,8 +231,6 @@ export class FontDropDown extends DropDownButton {
         this.onStateChange({"font-family": font});
         this.fontWidget.style.fontFamily = font;
         this.fontWidget.style.color = "black";
-        this.fontWidget.textContent = font;
+        this.fontWidget.textContent = font.replaceAll('"', '');
     }
 }
-
-
