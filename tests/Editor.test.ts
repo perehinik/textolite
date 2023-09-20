@@ -545,7 +545,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("right");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -570,7 +570,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -592,7 +592,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -618,7 +618,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("right");
         expect(newStyle).toEqual({"font-size": "13pt"});
@@ -644,7 +644,7 @@ describe('Testing setAlignment', () => {
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("");
 
-        const newStyle = editor.setAlignment(sel, style);
+        const newStyle = editor.setParagraphStyle(sel, style);
 
         expect((editorP as HTMLElement).style?.textAlign).toBe("right");
         expect(newStyle).toEqual({"font-size": "13pt"});

@@ -19,8 +19,8 @@ export const defaultStyle: CSSObj = {
     'letter-spacing': '0px',
     'line-height': '1.2',
     'font-family': 'Arial',
-    'font-size': '12pt'
-    //'vertical-align': 'sub'/'super'
+    'font-size': '12pt',
+    'vertical-align': 'baseline'
 }
 
 /**

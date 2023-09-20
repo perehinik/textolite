@@ -231,28 +231,33 @@ export class Editor {
      * @param style - New style with alignment parameters.
      * @returns - Style object with alignment parameter removed.
      */
-    setAlignment(sel: SelectionAdj, style: CSSObj): CSSObj {
-        if (!style["text-align"] || !sel || !sel.startNode) {return style;}
+    setParagraphStyle(sel: SelectionAdj, style: CSSObj): CSSObj {
+        const paragraphStyles = ["text-align", "text-indent"];
+        const availableStyles = paragraphStyles.filter((key) => Object.keys(style).includes(key));
+
+        if (!availableStyles || !sel || !sel.startNode) {return style;}
         const rootNode = document.getElementById(this.editorDivId) as Node;
         const startHierarchy = getNodeHierarchy(sel.startNode, rootNode);
         const endHierarchy = getNodeHierarchy(sel.endNode, rootNode);
         if (startHierarchy[0] !== rootNode || endHierarchy[0] != rootNode) {
-            delete style["text-align"];
+            availableStyles.forEach((key) => {delete style[key]});
             return style;
         }
-        const startAligningNode = startHierarchy[1];
-        const endAligningNode = endHierarchy[1];
+        const startNode = startHierarchy[1];
+        const endNode = endHierarchy[1];
         let startFound = false;
         for (let i = 0; i < rootNode.childNodes.length; i ++) {
             const iNode = rootNode.childNodes[i] as HTMLElement
-            if (!startFound && iNode === startAligningNode) {startFound = true;}
+            if (!startFound && iNode === startNode) {startFound = true;}
             // If table is selected - another controls should appear.
             if (startFound && iNode.style && !iNode.id?.startsWith("table-")) {
-                iNode.style.textAlign = style["text-align"];
+                availableStyles.forEach((key) => {
+                    iNode.style.setProperty(key, style[key]);
+                });
             }
-            if (iNode === endAligningNode) { break; }
+            if (iNode === endNode) { break; }
         }
-        delete style["text-align"];
+        availableStyles.forEach((key) => {delete style[key]});
         return style;
     }
 
@@ -264,7 +269,7 @@ export class Editor {
      * @param newStyle - New style which should be applied on selection area.
      */
     updateStyleAndOptimize(rootNode: Node, sel: SelectionAdj, newStyle: CSSObj): void {
-        newStyle = this.setAlignment(sel, newStyle);
+        newStyle = this.setParagraphStyle(sel, newStyle);
         setStyle(sel, newStyle);
         if (!rootNode.textContent) {return;}
         // Optimize DOM structure after style update
@@ -291,7 +296,7 @@ export class Editor {
      * @param newStyle - New style which should be applied on selection area.
      */
     setCursorStyle(selAdj: SelectionAdj, newStyle: CSSObj): void {
-        newStyle = this.setAlignment(selAdj, newStyle);
+        newStyle = this.setParagraphStyle(selAdj, newStyle);
         let cursorNd = selAdj.startNode;
         if (cursorNd.textContent !== "\u200b") {
             cursorNd = this.insertEmptySpan(selAdj.startNode, selAdj.startOffset);

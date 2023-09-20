@@ -1,6 +1,5 @@
 import { CSSObj } from "../../src/Styling";
 import { Tools } from "../../src/ToolsPanel/Tools";
-import * as iconsModule from '../../src/ToolsPanel/Icons'
 import * as fontsModue from "../../src/ToolsPanel/Inputs/Fonts"
 
 const onStyleChange = jest.fn();
@@ -25,7 +24,7 @@ describe('Testing constructor', () => {
         const {tools, toolsContainer, onStyleChange} = buildTools();
 
         expect(tools.onStyleChange).toEqual(onStyleChange);
-        expect(toolsContainer.childNodes.length).toBe(8);
+        expect(toolsContainer.childNodes.length).toBe(13);
     });
 
     test('bold button', () => {
